@@ -379,6 +379,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            _serviceCard(
+              icon: Icons.explore,
+              title: 'اكتشف المغرب',
+              subtitle: 'أماكن سياحية وخرائط',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const DiscoverScreen(),
+                ),
+              ),
+            ),
             const SizedBox(height: 18),
             Card(
               color: Colors.white,
@@ -552,6 +564,142 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     super.dispose();
+  }
+}
+
+// -------------------- DISCOVER MOROCCO --------------------
+
+class TouristPlace {
+  final String name;
+  final String city;
+  final String description;
+  const TouristPlace({
+    required this.name,
+    required this.city,
+    required this.description,
+  });
+}
+
+const List<TouristPlace> touristPlaces = [
+  TouristPlace(
+    name: 'المدينة العتيقة',
+    city: 'تطوان',
+    description: 'أزقة تاريخية وأسواق تقليدية، وهي جزء من التراث العالمي لليونسكو.',
+  ),
+  TouristPlace(
+    name: 'قصبة شفشاون',
+    city: 'شفشاون',
+    description: 'قصبة تاريخية وحديقة هادئة في قلب المدينة الزرقاء.',
+  ),
+  TouristPlace(
+    name: 'رأس الماء',
+    city: 'شفشاون',
+    description: 'منطقة طبيعية معروفة بمياهها الجارية وإطلالاتها الجبلية.',
+  ),
+  TouristPlace(
+    name: 'مغارة هرقل',
+    city: 'طنجة',
+    description: 'مغارة ساحلية شهيرة قرب رأس سبارطيل.',
+  ),
+  TouristPlace(
+    name: 'رأس سبارطيل',
+    city: 'طنجة',
+    description: 'منطقة ساحلية تطل على المحيط الأطلسي ومضيق جبل طارق.',
+  ),
+  TouristPlace(
+    name: 'ساحة جامع الفنا',
+    city: 'مراكش',
+    description: 'ساحة نابضة بالحياة قرب أسواق المدينة العتيقة.',
+  ),
+  TouristPlace(
+    name: 'صومعة حسان',
+    city: 'الرباط',
+    description: 'معلمة تاريخية بارزة بجوار ضريح محمد الخامس.',
+  ),
+  TouristPlace(
+    name: 'باب بوجلود',
+    city: 'فاس',
+    description: 'بوابة شهيرة تؤدي إلى أزقة فاس البالي التاريخية.',
+  ),
+  TouristPlace(
+    name: 'قصبة أكادير أوفلا',
+    city: 'أكادير',
+    description: 'موقع مرتفع يوفر إطلالة واسعة على مدينة أكادير والخليج.',
+  ),
+  TouristPlace(
+    name: 'مسجد الحسن الثاني',
+    city: 'الدار البيضاء',
+    description: 'معلمة معمارية بارزة على ساحل المحيط الأطلسي.',
+  ),
+];
+
+class DiscoverScreen extends StatelessWidget {
+  const DiscoverScreen({super.key});
+
+  Future<void> _openMap(BuildContext context, TouristPlace place) async {
+    final query = Uri.encodeComponent('${place.name} ${place.city} المغرب');
+    final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تعذر فتح الخرائط. تحقق من اتصال الإنترنت.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('اكتشف المغرب')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: darkNavy,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: const Text(
+              'وجهات مغربية تستحق الزيارة 🇲🇦\nاختر مكاناً وافتح موقعه على الخريطة.',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+                height: 1.6,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          ...touristPlaces.map((place) => Card(
+                color: Colors.white,
+                margin: const EdgeInsets.only(bottom: 10),
+                child: ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFFFEBEE),
+                    child: Icon(Icons.place, color: primaryRed),
+                  ),
+                  title: Text(place.name,
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text('${place.city} • ${place.description}'),
+                  isThreeLine: true,
+                  trailing: IconButton(
+                    tooltip: 'افتح على الخريطة',
+                    icon: const Icon(Icons.map_outlined, color: primaryRed),
+                    onPressed: () => _openMap(context, place),
+                  ),
+                  onTap: () => _openMap(context, place),
+                ),
+              )),
+          const SizedBox(height: 8),
+          const Text(
+            'هذه اقتراحات تعريفية للزيارة. تحقق من أوقات العمل وشروط الدخول قبل التنقل.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey, fontSize: 12),
+          ),
+        ],
+      ),
+    );
   }
 }
 
