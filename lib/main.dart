@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'screens/auth_screen.dart';
+import 'services/firestore_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -1210,6 +1213,7 @@ class _BookingScreenState extends State<BookingScreen> {
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
   bool confirmed = false;
+  bool saving = false;
 
   @override
   Widget build(BuildContext context) {
@@ -1248,8 +1252,8 @@ class _BookingScreenState extends State<BookingScreen> {
           SizedBox(
             height: 52,
             child: FilledButton(
-              onPressed: confirmed ? null : _confirmBooking,
-              child: Text(tr('إنشاء حجز تجريبي')),
+              onPressed: confirmed || saving ? null : _confirmBooking,
+              child: Text(saving ? 'جارٍ الحفظ…' : (firebaseReady && FirebaseAuth.instance.currentUser != null ? 'إرسال طلب الحجز' : tr('إنشاء حجز تجريبي'))),
             ),
           ),
         ],
@@ -1257,39 +1261,58 @@ class _BookingScreenState extends State<BookingScreen> {
     );
   }
 
-  void _confirmBooking() {
+  Future<void> _confirmBooking() async {
     final name = nameController.text.trim();
     final phone = phoneController.text.trim();
 
     if (name.isEmpty || phone.length < 8) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(tr('يرجى إدخال الاسم ورقم هاتف صحيح')),
-        ),
+        SnackBar(content: Text(tr('يرجى إدخال الاسم ورقم هاتف صحيح'))),
       );
       return;
     }
 
-    final reference =
-        'SSR${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+    setState(() => saving = true);
+    try {
+      var reference = 'SSR${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+      final signedIn = firebaseReady && FirebaseAuth.instance.currentUser != null;
 
-    final booking = Booking(
-      reference: reference,
-      trip: widget.trip,
-      date: widget.travelDate,
-    );
+      if (signedIn) {
+        // This stores a request in the user's Firestore account. It is not a
+        // confirmed seat or a ticket issued by the transport operator.
+        reference = await FirestoreService().createBooking(
+          origin: widget.trip.origin,
+          destination: widget.trip.destination,
+          travelDate: widget.travelDate,
+          passengerName: name,
+          passengerPhone: phone,
+          providerName: widget.trip.company,
+          displayedPrice: widget.trip.price,
+        );
+      }
 
-    setState(() => confirmed = true);
-    BookingStore.add(booking);
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => TicketScreen(booking: booking),
-      ),
-    );
+      final booking = Booking(
+        reference: reference,
+        trip: widget.trip,
+        date: widget.travelDate,
+      );
+      BookingStore.add(booking);
+      if (!mounted) return;
+      setState(() { confirmed = true; saving = false; });
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => TicketScreen(booking: booking)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('تعذر حفظ طلب الحجز في حسابك. تحقق من اتصال الإنترنت وقواعد Firestore ثم حاول مجدداً.'),
+        ),
+      );
+    }
   }
-
   @override
   void dispose() {
     nameController.dispose();
