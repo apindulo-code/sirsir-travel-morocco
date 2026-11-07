@@ -93,11 +93,12 @@ class _AuthScreenState extends State<AuthScreen> {
     try {
       await AuthService().verifyPhoneNumber(
         phoneNumber: _phone.text,
+        forceResendingToken: _resendToken,
         onVerificationCompleted: (credential) async {
           try {
             await AuthService().signInWithPhoneCredential(credential);
             if (mounted) _message('تم التحقق من رقم الهاتف وتسجيل الدخول.');
-          } catch (e) {
+          } catch (_) {
             if (mounted) _message('تعذر إكمال تسجيل الدخول بهذا الرقم.');
           }
         },
