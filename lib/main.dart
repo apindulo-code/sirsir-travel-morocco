@@ -1,4 +1,81 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+
+// Supported interface languages: Arabic, English, French and Spanish.
+final ValueNotifier<String> appLanguage = ValueNotifier<String>('ar');
+const Map<String, List<String>> appTranslations = {
+  'سير سير 🇲🇦': ['SirSir 🇲🇦', 'SirSir 🇲🇦', 'SirSir 🇲🇦'],
+  'حجوزاتي': ['My bookings', 'Mes réservations', 'Mis reservas'],
+  'اكتشف المغرب معنا': ['Discover Morocco with us', 'Découvrez le Maroc avec nous', 'Descubre Marruecos con nosotros'],
+  'رحلتك القادمة تبدأ من هنا': ['Your next journey starts here', 'Votre prochain voyage commence ici', 'Tu próximo viaje comienza aquí'],
+  'من الشمال إلى الجنوب': ['From north to south', 'Du nord au sud', 'De norte a sur'],
+  'ابحث عن رحلتك': ['Find your trip', 'Recherchez votre trajet', 'Busca tu viaje'],
+  'مدينة الانطلاق': ['Departure city', 'Ville de départ', 'Ciudad de salida'],
+  'مدينة الوصول': ['Destination city', 'Ville d’arrivée', 'Ciudad de destino'],
+  'ابحث عن الرحلات': ['Search trips', 'Rechercher des trajets', 'Buscar viajes'],
+  'اختر مدينتين مختلفتين': ['Choose two different cities', 'Choisissez deux villes différentes', 'Elige dos ciudades diferentes'],
+  'خدمات سير سير': ['SirSir services', 'Services SirSir', 'Servicios SirSir'],
+  'تذاكرك': ['Your tickets', 'Vos billets', 'Tus billetes'],
+  'رادار الملاعب': ['Stadium guide', 'Guide des stades', 'Guía de estadios'],
+  'ملاعب المغرب': ['Moroccan stadiums', 'Stades du Maroc', 'Estadios de Marruecos'],
+  'اكتشف المغرب': ['Discover Morocco', 'Découvrir le Maroc', 'Descubre Marruecos'],
+  'أماكن سياحية وخرائط': ['Places and maps', 'Lieux touristiques et cartes', 'Lugares turísticos y mapas'],
+  'الحجز الرسمي للتذاكر': ['Official ticket booking', 'Réservation officielle des billets', 'Reserva oficial de billetes'],
+  'انتقل إلى المنصات الرسمية للتحقق من المواعيد والأسعار وإتمام الدفع بأمان.': ['Visit official platforms to check schedules and prices and pay securely.', 'Consultez les plateformes officielles pour vérifier les horaires et les prix et payer en toute sécurité.', 'Visita las plataformas oficiales para consultar horarios y precios y pagar de forma segura.'],
+  'هذه نسخة تجريبية. مواعيد الرحلات والأسعار المعروضة ليست بيانات مباشرة أو عروض حجز مؤكدة.': ['This is a demo. Trip times and prices are not live data or confirmed booking offers.', 'Ceci est une version démo. Les horaires et les prix ne sont pas des données en direct ni des offres confirmées.', 'Esta es una versión de prueba. Los horarios y precios no son datos en directo ni ofertas confirmadas.'],
+  'تعذر فتح الموقع. تحقق من اتصال الإنترنت وحاول مجدداً.': ['Could not open the website. Check your internet connection and try again.', 'Impossible d’ouvrir le site. Vérifiez votre connexion Internet et réessayez.', 'No se pudo abrir el sitio. Comprueba tu conexión a Internet e inténtalo de nuevo.'],
+  'المدينة العتيقة': ['Old Medina', 'Ancienne médina', 'Medina antigua'],
+  'قصبة شفشاون': ['Chefchaouen Kasbah', 'Kasbah de Chefchaouen', 'Kasbah de Chefchaouen'],
+  'رأس الماء': ['Ras El Maa', 'Ras El Maa', 'Ras El Maa'],
+  'مغارة هرقل': ['Hercules Cave', 'Grottes d’Hercule', 'Cuevas de Hércules'],
+  'رأس سبارطيل': ['Cape Spartel', 'Cap Spartel', 'Cabo Espartel'],
+  'ساحة جامع الفنا': ['Jemaa el-Fnaa Square', 'Place Jemaa el-Fna', 'Plaza Jemaa el-Fna'],
+  'صومعة حسان': ['Hassan Tower', 'Tour Hassan', 'Torre Hassan'],
+  'باب بوجلود': ['Bab Boujloud', 'Bab Boujloud', 'Bab Boujloud'],
+  'قصبة أكادير أوفلا': ['Agadir Oufella Kasbah', 'Kasbah d’Agadir Oufella', 'Kasbah de Agadir Oufella'],
+  'مسجد الحسن الثاني': ['Hassan II Mosque', 'Mosquée Hassan II', 'Mezquita Hassan II'],
+  'لا توجد رحلات تجريبية لهذا المسار حالياً.': ['No demo trips are currently listed for this route.', 'Aucun trajet démo n’est actuellement proposé pour cet itinéraire.', 'No hay viajes de prueba disponibles para esta ruta.'],
+  'نتائج تجريبية': ['Demo results', 'Résultats de démonstration', 'Resultados de prueba'],
+  'بيانات المسافر': ['Passenger details', 'Informations du voyageur', 'Datos del pasajero'],
+  'الاسم الكامل': ['Full name', 'Nom complet', 'Nombre completo'],
+  'رقم الهاتف': ['Phone number', 'Numéro de téléphone', 'Número de teléfono'],
+  'إنشاء حجز تجريبي': ['Create demo booking', 'Créer une réservation démo', 'Crear reserva de prueba'],
+  'تفاصيل الحجز': ['Booking details', 'Détails de la réservation', 'Detalles de la reserva'],
+  'تم إنشاء الحجز التجريبي': ['Demo booking created', 'Réservation démo créée', 'Reserva de prueba creada'],
+  'العودة إلى الرئيسية': ['Back to home', 'Retour à l’accueil', 'Volver al inicio'],
+  'لا توجد حجوزات في هذه الجلسة': ['No bookings in this session', 'Aucune réservation dans cette session', 'No hay reservas en esta sesión'],
+  'معلومات الملعب': ['Stadium information', 'Informations sur le stade', 'Información del estadio'],
+  'المدينة': ['City', 'Ville', 'Ciudad'],
+  'السعة': ['Capacity', 'Capacité', 'Capacidad'],
+  'معلومات': ['Information', 'Informations', 'Información'],
+};
+String tr(String source) {
+  final values = appTranslations[source];
+  if (values == null) return source;
+  final index = {'en': 0, 'fr': 1, 'es': 2}[appLanguage.value] ?? -1;
+  return index < 0 ? source : values[index];
+}
+String cityLabel(String city) {
+  const names = {
+    'طنجة': ['Tangier', 'Tanger', 'Tánger'], 'تطوان': ['Tetouan', 'Tétouan', 'Tetuán'],
+    'المضيق': ['Mdiq', 'M’diq', 'Mdiq'], 'مرتيل': ['Martil', 'Martil', 'Martil'],
+    'العرائش': ['Larache', 'Larache', 'Larache'], 'القنيطرة': ['Kenitra', 'Kénitra', 'Kenitra'],
+    'الرباط': ['Rabat', 'Rabat', 'Rabat'], 'الدار البيضاء': ['Casablanca', 'Casablanca', 'Casablanca'],
+    'المحمدية': ['Mohammedia', 'Mohammedia', 'Mohammedia'], 'الجديدة': ['El Jadida', 'El Jadida', 'El Jadida'],
+    'آسفي': ['Safi', 'Safi', 'Safi'], 'الصويرة': ['Essaouira', 'Essaouira', 'Essaouira'],
+    'أكادير': ['Agadir', 'Agadir', 'Agadir'], 'مراكش': ['Marrakech', 'Marrakech', 'Marrakech'],
+    'بني ملال': ['Beni Mellal', 'Béni Mellal', 'Beni Mellal'], 'خريبكة': ['Khouribga', 'Khouribga', 'Khouribga'],
+    'فاس': ['Fez', 'Fès', 'Fez'], 'مكناس': ['Meknes', 'Meknès', 'Mequinez'],
+    'وجدة': ['Oujda', 'Oujda', 'Uchda'], 'الناظور': ['Nador', 'Nador', 'Nador'],
+    'الحسيمة': ['Al Hoceima', 'Al Hoceïma', 'Alhucemas'], 'شفشاون': ['Chefchaouen', 'Chefchaouen', 'Chauen'],
+    'ورزازات': ['Ouarzazate', 'Ouarzazate', 'Ouarzazate'], 'العيون': ['Laayoune', 'Laâyoune', 'El Aaiún'],
+    'الداخلة': ['Dakhla', 'Dakhla', 'Dajla']
+  };
+  final values = names[city];
+  final index = {'en': 0, 'fr': 1, 'es': 2}[appLanguage.value] ?? -1;
+  return values == null || index < 0 ? city : values[index];
+}
+
 import 'package:url_launcher/url_launcher.dart';
 
 void main() {
@@ -14,7 +91,10 @@ class SirSirApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return ValueListenableBuilder<String>(
+      valueListenable: appLanguage,
+      builder: (context, language, _) => MaterialApp(
+      locale: Locale(language),
       title: 'SirSir Travel Morocco',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -44,7 +124,7 @@ class SirSirApp extends StatelessWidget {
         ),
       ),
       home: const HomeScreen(),
-    );
+    ));
   }
 }
 
@@ -185,11 +265,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'سير سير 🇲🇦',
+              tr('سير سير 🇲🇦'),
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             Text(
@@ -199,9 +279,20 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
+          PopupMenuButton<String>(
+            tooltip: 'Choose language / Choisir la langue',
+            icon: Icon(Icons.language),
+            onSelected: (value) => appLanguage.value = value,
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 'ar', child: Text('العربية')),
+              PopupMenuItem(value: 'en', child: Text('English')),
+              PopupMenuItem(value: 'fr', child: Text('Français')),
+              PopupMenuItem(value: 'es', child: Text('Español')),
+            ],
+          ),
           IconButton(
-            icon: const Icon(Icons.confirmation_number_outlined),
-            tooltip: 'حجوزاتي',
+            icon: Icon(Icons.confirmation_number_outlined),
+            tooltip: tr('حجوزاتي'),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -225,11 +316,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 borderRadius: BorderRadius.circular(22),
               ),
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'اكتشف المغرب معنا',
+                    tr('اكتشف المغرب معنا'),
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 25,
@@ -238,7 +329,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'رحلتك القادمة تبدأ من هنا',
+                    tr('رحلتك القادمة تبدأ من هنا'),
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 15,
@@ -250,7 +341,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Icon(Icons.location_on, color: Colors.white),
                       SizedBox(width: 6),
                       Text(
-                        'من الشمال إلى الجنوب',
+                        tr('من الشمال إلى الجنوب'),
                         style: TextStyle(color: Colors.white),
                       ),
                     ],
@@ -258,34 +349,34 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 22),
-            const Text(
-              'ابحث عن رحلتك',
+            SizedBox(height: 22),
+            Text(
+              tr('ابحث عن رحلتك'),
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: darkNavy,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             _citySelector(
-              label: 'مدينة الانطلاق',
+              label: tr('مدينة الانطلاق'),
               value: origin,
               icon: Icons.trip_origin,
               onChanged: (value) {
                 if (value != null) setState(() => origin = value);
               },
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             _citySelector(
-              label: 'مدينة الوصول',
+              label: tr('مدينة الوصول'),
               value: destination,
               icon: Icons.location_on,
               onChanged: (value) {
                 if (value != null) setState(() => destination = value);
               },
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: () async {
                 final date = await showDatePicker(
@@ -300,7 +391,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   setState(() => selectedDate = date);
                 }
               },
-              icon: const Icon(Icons.calendar_month),
+              icon: Icon(Icons.calendar_month),
               label: Text(
                 'تاريخ السفر: ${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
               ),
@@ -308,13 +399,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.all(15),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             SizedBox(
               height: 54,
               child: FilledButton.icon(
-                icon: const Icon(Icons.search),
-                label: const Text(
-                  'ابحث عن الرحلات',
+                icon: Icon(Icons.search),
+                label: Text(
+                  tr('ابحث عن الرحلات'),
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
@@ -322,7 +413,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 onPressed: () {
                   if (origin == destination) {
-                    _message('اختر مدينتين مختلفتين');
+                    _message(tr('اختر مدينتين مختلفتين'));
                     return;
                   }
                   Navigator.push(
@@ -338,23 +429,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
             ),
-            const SizedBox(height: 24),
-            const Text(
-              'خدمات سير سير',
+            SizedBox(height: 24),
+            Text(
+              tr('خدمات سير سير'),
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: darkNavy,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: _serviceCard(
                     icon: Icons.confirmation_number,
-                    title: 'حجوزاتي',
-                    subtitle: 'تذاكرك',
+                    title: tr('حجوزاتي'),
+                    subtitle: tr('تذاكرك'),
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -363,12 +454,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: _serviceCard(
                     icon: Icons.stadium,
-                    title: 'رادار الملاعب',
-                    subtitle: 'ملاعب المغرب',
+                    title: tr('رادار الملاعب'),
+                    subtitle: tr('ملاعب المغرب'),
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -379,11 +470,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             _serviceCard(
               icon: Icons.explore,
-              title: 'اكتشف المغرب',
-              subtitle: 'أماكن سياحية وخرائط',
+              title: tr('اكتشف المغرب'),
+              subtitle: tr('أماكن سياحية وخرائط'),
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -391,7 +482,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 18),
+            SizedBox(height: 18),
             Card(
               color: Colors.white,
               elevation: 0,
@@ -404,13 +495,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
+                    Row(
                       children: [
                         Icon(Icons.verified_user, color: primaryRed),
                         SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'الحجز الرسمي للتذاكر',
+                            tr('الحجز الرسمي للتذاكر'),
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
@@ -420,12 +511,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'انتقل إلى المنصات الرسمية للتحقق من المواعيد والأسعار وإتمام الدفع بأمان.',
+                    SizedBox(height: 6),
+                    Text(
+                      tr('انتقل إلى المنصات الرسمية للتحقق من المواعيد والأسعار وإتمام الدفع بأمان.'),
                       style: TextStyle(color: Colors.black54, fontSize: 12),
                     ),
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
                     Row(
                       children: [
                         Expanded(
@@ -433,18 +524,18 @@ class _HomeScreenState extends State<HomeScreen> {
                             onPressed: () => _openOfficialBooking(
                               'https://booking.ctm.ma/',
                             ),
-                            icon: const Icon(Icons.directions_bus),
-                            label: const Text('CTM'),
+                            icon: Icon(Icons.directions_bus),
+                            label: Text('CTM'),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        SizedBox(width: 10),
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () => _openOfficialBooking(
                               'https://www.oncf-voyages.ma/',
                             ),
-                            icon: const Icon(Icons.train),
-                            label: const Text('ONCF'),
+                            icon: Icon(Icons.train),
+                            label: Text('ONCF'),
                           ),
                         ),
                       ],
@@ -453,21 +544,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 18),
+            SizedBox(height: 18),
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: Colors.orange.shade50,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Row(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(Icons.info_outline, color: Colors.orange),
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'هذه نسخة تجريبية. مواعيد الرحلات والأسعار المعروضة ليست بيانات مباشرة أو عروض حجز مؤكدة.',
+                      tr('هذه نسخة تجريبية. مواعيد الرحلات والأسعار المعروضة ليست بيانات مباشرة أو عروض حجز مؤكدة.'),
                       style: TextStyle(fontSize: 12),
                     ),
                   ),
@@ -503,7 +594,7 @@ class _HomeScreenState extends State<HomeScreen> {
         items: moroccanCities.map((city) {
           return DropdownMenuItem(
             value: city,
-            child: Text(city),
+            child: Text(cityLabel(city)),
           );
         }).toList(),
         onChanged: onChanged,
@@ -529,7 +620,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             Icon(icon, color: primaryRed, size: 32),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               title,
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -551,7 +642,7 @@ class _HomeScreenState extends State<HomeScreen> {
       mode: LaunchMode.externalApplication,
     );
     if (!opened && mounted) {
-      _message('تعذر فتح الموقع. تحقق من اتصال الإنترنت وحاول مجدداً.');
+      _message(tr('تعذر فتح الموقع. تحقق من اتصال الإنترنت وحاول مجدداً.'));
     }
   }
 
@@ -582,52 +673,52 @@ class TouristPlace {
 
 const List<TouristPlace> touristPlaces = [
   TouristPlace(
-    name: 'المدينة العتيقة',
+    name: tr('المدينة العتيقة'),
     city: 'تطوان',
     description: 'أزقة تاريخية وأسواق تقليدية، وهي جزء من التراث العالمي لليونسكو.',
   ),
   TouristPlace(
-    name: 'قصبة شفشاون',
+    name: tr('قصبة شفشاون'),
     city: 'شفشاون',
     description: 'قصبة تاريخية وحديقة هادئة في قلب المدينة الزرقاء.',
   ),
   TouristPlace(
-    name: 'رأس الماء',
+    name: tr('رأس الماء'),
     city: 'شفشاون',
     description: 'منطقة طبيعية معروفة بمياهها الجارية وإطلالاتها الجبلية.',
   ),
   TouristPlace(
-    name: 'مغارة هرقل',
+    name: tr('مغارة هرقل'),
     city: 'طنجة',
     description: 'مغارة ساحلية شهيرة قرب رأس سبارطيل.',
   ),
   TouristPlace(
-    name: 'رأس سبارطيل',
+    name: tr('رأس سبارطيل'),
     city: 'طنجة',
     description: 'منطقة ساحلية تطل على المحيط الأطلسي ومضيق جبل طارق.',
   ),
   TouristPlace(
-    name: 'ساحة جامع الفنا',
+    name: tr('ساحة جامع الفنا'),
     city: 'مراكش',
     description: 'ساحة نابضة بالحياة قرب أسواق المدينة العتيقة.',
   ),
   TouristPlace(
-    name: 'صومعة حسان',
+    name: tr('صومعة حسان'),
     city: 'الرباط',
     description: 'معلمة تاريخية بارزة بجوار ضريح محمد الخامس.',
   ),
   TouristPlace(
-    name: 'باب بوجلود',
+    name: tr('باب بوجلود'),
     city: 'فاس',
     description: 'بوابة شهيرة تؤدي إلى أزقة فاس البالي التاريخية.',
   ),
   TouristPlace(
-    name: 'قصبة أكادير أوفلا',
+    name: tr('قصبة أكادير أوفلا'),
     city: 'أكادير',
     description: 'موقع مرتفع يوفر إطلالة واسعة على مدينة أكادير والخليج.',
   ),
   TouristPlace(
-    name: 'مسجد الحسن الثاني',
+    name: tr('مسجد الحسن الثاني'),
     city: 'الدار البيضاء',
     description: 'معلمة معمارية بارزة على ساحل المحيط الأطلسي.',
   ),
@@ -642,7 +733,7 @@ class DiscoverScreen extends StatelessWidget {
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!opened && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تعذر فتح الخرائط. تحقق من اتصال الإنترنت.')),
+        SnackBar(content: Text('تعذر فتح الخرائط. تحقق من اتصال الإنترنت.')),
       );
     }
   }
@@ -650,7 +741,7 @@ class DiscoverScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('اكتشف المغرب')),
+      appBar: AppBar(title: Text(tr('اكتشف المغرب'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -660,7 +751,7 @@ class DiscoverScreen extends StatelessWidget {
               color: darkNavy,
               borderRadius: BorderRadius.circular(18),
             ),
-            child: const Text(
+            child: Text(
               'وجهات مغربية تستحق الزيارة 🇲🇦\nاختر مكاناً وافتح موقعه على الخريطة.',
               style: TextStyle(
                 color: Colors.white,
@@ -670,12 +761,12 @@ class DiscoverScreen extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           ...touristPlaces.map((place) => Card(
                 color: Colors.white,
                 margin: const EdgeInsets.only(bottom: 10),
                 child: ListTile(
-                  leading: const CircleAvatar(
+                  leading: CircleAvatar(
                     backgroundColor: Color(0xFFFFEBEE),
                     child: Icon(Icons.place, color: primaryRed),
                   ),
@@ -685,14 +776,14 @@ class DiscoverScreen extends StatelessWidget {
                   isThreeLine: true,
                   trailing: IconButton(
                     tooltip: 'افتح على الخريطة',
-                    icon: const Icon(Icons.map_outlined, color: primaryRed),
+                    icon: Icon(Icons.map_outlined, color: primaryRed),
                     onPressed: () => _openMap(context, place),
                   ),
                   onTap: () => _openMap(context, place),
                 ),
               )),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: 8),
+          Text(
             'هذه اقتراحات تعريفية للزيارة. تحقق من أوقات العمل وشروط الدخول قبل التنقل.',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey, fontSize: 12),
@@ -725,7 +816,7 @@ class ResultsScreen extends StatelessWidget {
     }).toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('الرحلات المتاحة')),
+      appBar: AppBar(title: Text('الرحلات المتاحة')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -739,17 +830,17 @@ class ResultsScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    origin,
+                    cityLabel(origin),
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 17,
                     ),
                   ),
                 ),
-                const Icon(Icons.arrow_forward, color: primaryRed),
+                Icon(Icons.arrow_forward, color: primaryRed),
                 Expanded(
                   child: Text(
-                    destination,
+                    cityLabel(destination),
                     textAlign: TextAlign.end,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
@@ -760,14 +851,14 @@ class ResultsScreen extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             'تاريخ السفر: ${travelDate.day}/${travelDate.month}/${travelDate.year}',
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
           if (trips.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.all(25),
               child: Column(
                 children: [
@@ -775,7 +866,7 @@ class ResultsScreen extends StatelessWidget {
                       size: 55, color: Colors.grey),
                   SizedBox(height: 12),
                   Text(
-                    'لا توجد رحلات تجريبية لهذا المسار حالياً.',
+                    tr('لا توجد رحلات تجريبية لهذا المسار حالياً.'),
                     textAlign: TextAlign.center,
                   ),
                   SizedBox(height: 8),
@@ -788,14 +879,14 @@ class ResultsScreen extends StatelessWidget {
               ),
             )
           else ...[
-            const Text(
-              'نتائج تجريبية',
+            Text(
+              tr('نتائج تجريبية'),
               style: TextStyle(
                 color: primaryRed,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             ...trips.map(
               (trip) => TripCard(
                 trip: trip,
@@ -845,11 +936,11 @@ class TripCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   backgroundColor: Color(0xFFFFEBEE),
                   child: Icon(Icons.directions_bus, color: primaryRed),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     trip.company,
@@ -874,17 +965,17 @@ class TripCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _timeColumn('الانطلاق', trip.departure),
-                const Icon(Icons.arrow_forward, color: Colors.grey),
+                Icon(Icons.arrow_forward, color: Colors.grey),
                 _timeColumn('الوصول', trip.arrival),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Row(
               children: [
                 Expanded(child: Text(trip.type)),
                 FilledButton(
                   onPressed: onBook,
-                  child: const Text('متابعة الحجز'),
+                  child: Text('متابعة الحجز'),
                 ),
               ],
             ),
@@ -934,7 +1025,7 @@ class _BookingScreenState extends State<BookingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('بيانات المسافر')),
+      appBar: AppBar(title: Text(tr('بيانات المسافر'))),
       body: ListView(
         padding: const EdgeInsets.all(18),
         children: [
@@ -942,34 +1033,34 @@ class _BookingScreenState extends State<BookingScreen> {
             trip: widget.trip,
             onBook: () {},
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           TextField(
             controller: nameController,
-            decoration: const InputDecoration(
-              labelText: 'الاسم الكامل',
+            decoration: InputDecoration(
+              labelText: tr('الاسم الكامل'),
               prefixIcon: Icon(Icons.person),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           TextField(
             controller: phoneController,
             keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
-              labelText: 'رقم الهاتف',
+            decoration: InputDecoration(
+              labelText: tr('رقم الهاتف'),
               prefixIcon: Icon(Icons.phone),
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: 16),
+          Text(
             'ملاحظة: هذا حجز تجريبي محلي، ولا يتم إرسال بياناتك إلى شركة نقل أو إصدار تذكرة سفر صالحة.',
             style: TextStyle(color: Colors.grey, fontSize: 12),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           SizedBox(
             height: 52,
             child: FilledButton(
               onPressed: confirmed ? null : _confirmBooking,
-              child: const Text('إنشاء حجز تجريبي'),
+              child: Text(tr('إنشاء حجز تجريبي')),
             ),
           ),
         ],
@@ -983,7 +1074,7 @@ class _BookingScreenState extends State<BookingScreen> {
 
     if (name.isEmpty || phone.length < 8) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('يرجى إدخال الاسم ورقم هاتف صحيح'),
         ),
       );
@@ -1038,25 +1129,25 @@ class TicketScreen extends StatelessWidget {
     final trip = booking.trip;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('تفاصيل الحجز')),
+      appBar: AppBar(title: Text(tr('تفاصيل الحجز'))),
       body: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
           children: [
-            const Icon(
+            Icon(
               Icons.confirmation_number,
               size: 65,
               color: primaryRed,
             ),
-            const SizedBox(height: 12),
-            const Text(
-              'تم إنشاء الحجز التجريبي',
+            SizedBox(height: 12),
+            Text(
+              tr('تم إنشاء الحجز التجريبي'),
               style: TextStyle(
                 fontSize: 21,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             Card(
               color: Colors.white,
               child: Padding(
@@ -1078,8 +1169,8 @@ class TicketScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            const Text(
+            SizedBox(height: 12),
+            Text(
               'هذا ليس تذكرة نقل رسمية ولا يؤكد مقعداً لدى الشركة.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.red, fontSize: 12),
@@ -1091,7 +1182,7 @@ class TicketScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.popUntil(context, (route) => route.isFirst);
                 },
-                child: const Text('العودة إلى الرئيسية'),
+                child: Text(tr('العودة إلى الرئيسية')),
               ),
             ),
           ],
@@ -1130,15 +1221,15 @@ class BookingsScreen extends StatelessWidget {
     final bookings = BookingStore.bookings.reversed.toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('حجوزاتي')),
+      appBar: AppBar(title: Text(tr('حجوزاتي'))),
       body: bookings.isEmpty
-          ? const Center(
+          ? Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.luggage, size: 60, color: Colors.grey),
                   SizedBox(height: 12),
-                  Text('لا توجد حجوزات في هذه الجلسة'),
+                  Text(tr('لا توجد حجوزات في هذه الجلسة')),
                 ],
               ),
             )
@@ -1150,7 +1241,7 @@ class BookingsScreen extends StatelessWidget {
                 return Card(
                   color: Colors.white,
                   child: ListTile(
-                    leading: const Icon(
+                    leading: Icon(
                       Icons.confirmation_number,
                       color: primaryRed,
                     ),
@@ -1231,7 +1322,7 @@ class StadiumScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('رادار ملاعب المغرب')),
+      appBar: AppBar(title: Text('رادار ملاعب المغرب')),
       body: ListView(
         padding: const EdgeInsets.all(15),
         children: [
@@ -1241,7 +1332,7 @@ class StadiumScreen extends StatelessWidget {
               color: darkNavy,
               borderRadius: BorderRadius.circular(18),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 Icon(Icons.stadium, color: Colors.white, size: 40),
                 SizedBox(width: 12),
@@ -1258,13 +1349,13 @@ class StadiumScreen extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 15),
+          SizedBox(height: 15),
           ...stadiums.map(
             (stadium) => Card(
               color: Colors.white,
               margin: const EdgeInsets.only(bottom: 10),
               child: ListTile(
-                leading: const CircleAvatar(
+                leading: CircleAvatar(
                   backgroundColor: Color(0xFFFFEBEE),
                   child: Icon(Icons.stadium, color: primaryRed),
                 ),
@@ -1275,7 +1366,7 @@ class StadiumScreen extends StatelessWidget {
                 subtitle: Text(
                   '${stadium.city} • السعة: ${stadium.capacity}',
                 ),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 15),
+                trailing: Icon(Icons.arrow_forward_ios, size: 15),
                 onTap: () {
                   Navigator.push(
                     context,
@@ -1289,8 +1380,8 @@ class StadiumScreen extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: 8),
+          Text(
             'المعلومات تعريفية وتجريبية. لا توجد حالياً بيانات مباشرة عن المباريات أو حالة الملاعب.',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey, fontSize: 12),
@@ -1312,20 +1403,20 @@ class StadiumDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('معلومات الملعب')),
+      appBar: AppBar(title: Text(tr('معلومات الملعب'))),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Center(
+            Center(
               child: Icon(
                 Icons.stadium,
                 size: 90,
                 color: primaryRed,
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             Text(
               stadium.name,
               style: const TextStyle(
@@ -1333,12 +1424,12 @@ class StadiumDetailsScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 15),
-            _detail(Icons.location_city, 'المدينة', stadium.city),
-            _detail(Icons.people, 'السعة', stadium.capacity),
-            _detail(Icons.info_outline, 'معلومات', stadium.description),
-            const SizedBox(height: 20),
-            const Text(
+            SizedBox(height: 15),
+            _detail(Icons.location_city, tr('المدينة'), stadium.city),
+            _detail(Icons.people, tr('السعة'), stadium.capacity),
+            _detail(Icons.info_outline, tr('معلومات'), stadium.description),
+            SizedBox(height: 20),
+            Text(
               'المباريات والتنبيهات المباشرة ستحتاج إلى ربط مصدر رسمي للمواعيد والنتائج.',
               style: TextStyle(color: Colors.grey),
             ),
@@ -1355,7 +1446,7 @@ class StadiumDetailsScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: primaryRed),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Text('$title: $value'),
           ),
