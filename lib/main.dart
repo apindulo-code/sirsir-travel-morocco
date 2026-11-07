@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // Supported interface languages: Arabic, English, French and Spanish.
 final ValueNotifier<String> appLanguage = ValueNotifier<String>('ar');
@@ -76,7 +77,6 @@ String cityLabel(String city) {
   return values == null || index < 0 ? city : values[index];
 }
 
-import 'package:url_launcher/url_launcher.dart';
 
 void main() {
   runApp(const SirSirApp());
