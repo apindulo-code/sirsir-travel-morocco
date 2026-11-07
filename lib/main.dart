@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() {
   runApp(const SirSirApp());
@@ -379,6 +380,68 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             const SizedBox(height: 18),
+            Card(
+              color: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: Colors.grey.shade200),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.verified_user, color: primaryRed),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'الحجز الرسمي للتذاكر',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: darkNavy,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'انتقل إلى المنصات الرسمية للتحقق من المواعيد والأسعار وإتمام الدفع بأمان.',
+                      style: TextStyle(color: Colors.black54, fontSize: 12),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: FilledButton.icon(
+                            onPressed: () => _openOfficialBooking(
+                              'https://booking.ctm.ma/',
+                            ),
+                            icon: const Icon(Icons.directions_bus),
+                            label: const Text('CTM'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _openOfficialBooking(
+                              'https://www.oncf-voyages.ma/',
+                            ),
+                            icon: const Icon(Icons.train),
+                            label: const Text('ONCF'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -467,6 +530,17 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _openOfficialBooking(String url) async {
+    final uri = Uri.parse(url);
+    final opened = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!opened && mounted) {
+      _message('تعذر فتح الموقع. تحقق من اتصال الإنترنت وحاول مجدداً.');
+    }
   }
 
   void _message(String message) {
