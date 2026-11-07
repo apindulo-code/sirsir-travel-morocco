@@ -24,7 +24,9 @@ service cloud.firestore {
         && data.displayName.size() <= 100
         && (data.email == null || data.email is string)
         && (data.phoneNumber == null || data.phoneNumber is string)
-        && validLanguage(data.preferredLanguage);
+        && validLanguage(data.preferredLanguage)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
     }
 
     match /destinations/{document=**} {
@@ -59,7 +61,8 @@ service cloud.firestore {
         && request.resource.data.displayName.size() <= 100
         && (request.resource.data.phoneNumber == null
           || request.resource.data.phoneNumber is string)
-        && validLanguage(request.resource.data.preferredLanguage);
+        && validLanguage(request.resource.data.preferredLanguage)
+        && request.resource.data.updatedAt is timestamp;
       allow delete: if owns(uid);
 
       match /{subcollection}/{document=**} {
