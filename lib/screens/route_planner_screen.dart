@@ -150,7 +150,15 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                     child: Text(city),
                   )).toList(),
                   onChanged: _loading ? null : (value) {
-                    if (value != null) setState(() => _origin = value);
+                    if (value != null) {
+                      setState(() {
+                        _origin = value;
+                        _route = [];
+                        _distanceKm = null;
+                        _durationMinutes = null;
+                        _error = null;
+                      });
+                    }
                   },
                 ),
                 const SizedBox(height: 10),
@@ -166,7 +174,15 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                     child: Text(city),
                   )).toList(),
                   onChanged: _loading ? null : (value) {
-                    if (value != null) setState(() => _destination = value);
+                    if (value != null) {
+                      setState(() {
+                        _destination = value;
+                        _route = [];
+                        _distanceKm = null;
+                        _durationMinutes = null;
+                        _error = null;
+                      });
+                    }
                   },
                 ),
                 const SizedBox(height: 10),
@@ -189,6 +205,8 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                         _origin = _destination;
                         _destination = previous;
                         _route = [];
+                        _distanceKm = null;
+                        _durationMinutes = null;
                         _error = null;
                       }),
                       icon: const Icon(Icons.swap_vert),
