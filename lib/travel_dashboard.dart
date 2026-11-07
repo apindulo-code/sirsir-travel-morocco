@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 
@@ -35,9 +36,8 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
       vsync: this,
       duration: const Duration(seconds: 22),
     )..repeat();
-    // Do not request native location permissions during app startup.
-    // Load a safe default city first; GPS remains available via the manual button.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadCity(city));
+    // Restore the last selected city. The user can still request GPS manually.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _restoreCity());
   }
   @override
   void dispose() { ticker.dispose(); super.dispose(); }
@@ -107,7 +107,26 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
     }
   }
 
-  Future<void> _loadCity(String name) async { city=name; final p=cities[name]!; await _load(p[0],p[1],name); }
+  Future<void> _restoreCity() async {
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      final saved = preferences.getString('travel_city');
+      if (!mounted) return;
+      await _loadCity(saved != null && cities.containsKey(saved) ? saved : city);
+    } catch (_) {
+      if (mounted) await _loadCity(city);
+    }
+  }
+
+  Future<void> _loadCity(String name) async {
+    city = name;
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      await preferences.setString('travel_city', name);
+    } catch (_) {}
+    final p = cities[name]!;
+    await _load(p[0], p[1], name);
+  }
   Future<void> _load(double lat,double lon,String label) async {
     setState(() { loading=true; error=null; location=label; });
     try {
