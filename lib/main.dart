@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'screens/auth_screen.dart';
 import 'screens/route_planner_screen.dart';
+import 'screens/legal_document_screen.dart';
 import 'services/firestore_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -710,6 +711,36 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              alignment: WrapAlignment.center,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const LegalDocumentScreen(
+                        title: 'سياسة الخصوصية',
+                        assetPath: 'docs/PRIVACY_POLICY_AR.md',
+                      ),
+                    ),
+                  ),
+                  child: const Text('سياسة الخصوصية'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const LegalDocumentScreen(
+                        title: 'شروط الاستخدام',
+                        assetPath: 'docs/TERMS_AR.md',
+                      ),
+                    ),
+                  ),
+                  child: const Text('شروط الاستخدام'),
+                ),
+              ],
             ),
           ],
         ),
