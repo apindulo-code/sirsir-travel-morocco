@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 // Supported interface languages: Arabic, English, French and Spanish.
 final ValueNotifier<String> appLanguage = ValueNotifier<String>('ar');
@@ -696,12 +698,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _openMoroccoMap() async {
-    final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent('Tourist attractions Morocco')}');
-    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!opened && mounted) {
-      _message(tr('تعذر فتح الخرائط. تحقق من اتصال الإنترنت.'));
-    }
+  void _openMoroccoMap() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const MoroccoMapScreen()));
   }
 
   Future<void> _openOfficialBooking(String url) async {
@@ -733,10 +731,14 @@ class TouristPlace {
   final String name;
   final String city;
   final String description;
+  final double latitude;
+  final double longitude;
   const TouristPlace({
     required this.name,
     required this.city,
     required this.description,
+    required this.latitude,
+    required this.longitude,
   });
 }
 
@@ -745,51 +747,61 @@ const List<TouristPlace> touristPlaces = [
     name: 'المدينة العتيقة',
     city: 'تطوان',
     description: 'أزقة تاريخية وأسواق تقليدية، وهي جزء من التراث العالمي لليونسكو.',
+    latitude: 35.5711, longitude: -5.3724,
   ),
   TouristPlace(
     name: 'قصبة شفشاون',
     city: 'شفشاون',
     description: 'قصبة تاريخية وحديقة هادئة في قلب المدينة الزرقاء.',
+    latitude: 35.1688, longitude: -5.2636,
   ),
   TouristPlace(
     name: 'رأس الماء',
     city: 'شفشاون',
     description: 'منطقة طبيعية معروفة بمياهها الجارية وإطلالاتها الجبلية.',
+    latitude: 35.1752, longitude: -5.2608,
   ),
   TouristPlace(
     name: 'مغارة هرقل',
     city: 'طنجة',
     description: 'مغارة ساحلية شهيرة قرب رأس سبارطيل.',
+    latitude: 35.7595, longitude: -5.9372,
   ),
   TouristPlace(
     name: 'رأس سبارطيل',
     city: 'طنجة',
     description: 'منطقة ساحلية تطل على المحيط الأطلسي ومضيق جبل طارق.',
+    latitude: 35.7917, longitude: -5.9230,
   ),
   TouristPlace(
     name: 'ساحة جامع الفنا',
     city: 'مراكش',
     description: 'ساحة نابضة بالحياة قرب أسواق المدينة العتيقة.',
+    latitude: 31.6258, longitude: -7.9891,
   ),
   TouristPlace(
     name: 'صومعة حسان',
     city: 'الرباط',
     description: 'معلمة تاريخية بارزة بجوار ضريح محمد الخامس.',
+    latitude: 34.0242, longitude: -6.8229 
   ),
   TouristPlace(
     name: 'باب بوجلود',
     city: 'فاس',
     description: 'بوابة شهيرة تؤدي إلى أزقة فاس البالي التاريخية.',
+    latitude: 34.0616, longitude: -4.9857,
   ),
   TouristPlace(
     name: 'قصبة أكادير أوفلا',
     city: 'أكادير',
     description: 'موقع مرتفع يوفر إطلالة واسعة على مدينة أكادير والخليج.',
+    latitude: 30.4278, longitude: -9.6240,
   ),
   TouristPlace(
     name: 'مسجد الحسن الثاني',
     city: 'الدار البيضاء',
     description: 'معلمة معمارية بارزة على ساحل المحيط الأطلسي.',
+    latitude: 33.6084, longitude: -7.6326,
   ),
 ];
 
@@ -856,6 +868,74 @@ class DiscoverScreen extends StatelessWidget {
             'هذه اقتراحات تعريفية للزيارة. تحقق من أوقات العمل وشروط الدخول قبل التنقل.',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// -------------------- INTERACTIVE MOROCCO MAP --------------------
+
+class MoroccoMapScreen extends StatelessWidget {
+  const MoroccoMapScreen({super.key});
+
+  Future<void> _openPlace(TouristPlace place) async {
+    final query = Uri.encodeComponent('${place.name} ${place.city} Morocco');
+    final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(tr('خريطة المغرب'))),
+      body: Column(
+        children: [
+          Expanded(
+            child: FlutterMap(
+              options: const MapOptions(
+                initialCenter: LatLng(31.8, -6.2),
+                initialZoom: 5.2,
+                minZoom: 4.5,
+                maxZoom: 17,
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.sirsir.travel.morocco',
+                ),
+                MarkerLayer(
+                  markers: touristPlaces.map((place) => Marker(
+                    point: LatLng(place.latitude, place.longitude),
+                    width: 46,
+                    height: 54,
+                    child: GestureDetector(
+                      onTap: () => _openPlace(place),
+                      child: const Icon(Icons.location_on, color: primaryRed, size: 42),
+                    ),
+                  )).toList(),
+                ),
+                RichAttributionWidget(
+                  attributions: [
+                    TextSourceAttribution(
+                      'OpenStreetMap contributors',
+                      onTap: () => launchUrl(Uri.parse('https://www.openstreetmap.org/copyright')),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            color: Colors.white,
+            child: Text(
+              tr('اضغط على علامة المكان لفتحه في خرائط Google.'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, color: Colors.black54),
+            ),
           ),
         ],
       ),
