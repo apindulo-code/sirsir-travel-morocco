@@ -49,6 +49,37 @@ const Map<String, List<String>> appTranslations = {
   'المدينة': ['City', 'Ville', 'Ciudad'],
   'السعة': ['Capacity', 'Capacité', 'Capacidad'],
   'معلومات': ['Information', 'Informations', 'Información'],
+
+  'الرحلات المتاحة': ['Available trips', 'Trajets disponibles', 'Viajes disponibles'],
+  'تاريخ السفر: ': ['Travel date: ', 'Date du voyage : ', 'Fecha del viaje: '],
+  tr('هذا لا يعني عدم وجود رحلات حقيقية؛ التطبيق لم يتصل بعد بمصادر الشركات.'): ['This does not mean real trips are unavailable; the app is not yet connected to transport providers.', 'Cela ne signifie pas qu’il n’existe aucun trajet réel ; l’application n’est pas encore connectée aux transporteurs.', 'Esto no significa que no haya viajes reales; la aplicación aún no está conectada a los proveedores.'],
+  'الانطلاق': ['Departure', 'Départ', 'Salida'],
+  'الوصول': ['Arrival', 'Arrivée', 'Llegada'],
+  'متابعة الحجز': ['Continue booking', 'Continuer la réservation', 'Continuar reserva'],
+  tr('ملاحظة: هذا حجز تجريبي محلي، ولا يتم إرسال بياناتك إلى شركة نقل أو إصدار تذكرة سفر صالحة.'): ['Note: This is a local demo booking. Your details are not sent to a transport company and no valid travel ticket is issued.', 'Remarque : il s’agit d’une réservation démo locale. Vos données ne sont pas envoyées à un transporteur et aucun billet valide n’est émis.', 'Nota: Esta es una reserva de prueba local. Tus datos no se envían a ninguna empresa de transporte ni se emite un billete válido.'],
+  'يرجى إدخال الاسم ورقم هاتف صحيح': ['Please enter your name and a valid phone number', 'Veuillez saisir votre nom et un numéro de téléphone valide', 'Introduce tu nombre y un número de teléfono válido'],
+  'رقم الحجز': ['Booking reference', 'Référence de réservation', 'Referencia de reserva'],
+  'الشركة': ['Operator', 'Compagnie', 'Compañía'],
+  'ساعة السفر': ['Departure time', 'Heure de départ', 'Hora de salida'],
+  'التاريخ': ['Date', 'Date', 'Fecha'],
+  'السعر التجريبي': ['Demo price', 'Prix indicatif', 'Precio de prueba'],
+  tr('هذا ليس تذكرة نقل رسمية ولا يؤكد مقعداً لدى الشركة.'): ['This is not an official transport ticket and does not confirm a seat with the operator.', 'Ceci n’est pas un billet officiel et ne confirme aucune place auprès du transporteur.', 'Esto no es un billete oficial ni confirma un asiento con la compañía.'],
+  'المرجع: ': ['Reference: ', 'Référence : ', 'Referencia: '],
+  'ملعب ابن بطوطة': ['Ibn Batouta Stadium', 'Stade Ibn Batouta', 'Estadio Ibn Batouta'],
+  'مركب محمد الخامس': ['Mohammed V Stadium', 'Complexe Mohammed V', 'Estadio Mohammed V'],
+  'ملعب الأمير مولاي عبد الله': ['Prince Moulay Abdellah Stadium', 'Stade du Prince Moulay Abdellah', 'Estadio Príncipe Moulay Abdellah'],
+  'الملعب الكبير لمراكش': ['Marrakech Grand Stadium', 'Grand Stade de Marrakech', 'Gran Estadio de Marrakech'],
+  'ملعب أدرار': ['Adrar Stadium', 'Stade Adrar', 'Estadio Adrar'],
+  'المركب الرياضي بفاس': ['Fez Sports Complex', 'Complexe sportif de Fès', 'Complejo deportivo de Fez'],
+  'رادار ملاعب المغرب': ['Morocco Stadium Guide', 'Guide des stades du Maroc', 'Guía de estadios de Marruecos'],
+  tr('اكتشف الملاعب المغربية\nوتعرّف على المدن الرياضية'): ['Discover Moroccan stadiums\nand sports cities', 'Découvrez les stades marocains\net les villes sportives', 'Descubre los estadios marroquíes\ny las ciudades deportivas'],
+  'السعة: ': ['Capacity: ', 'Capacité : ', 'Capacidad: '],
+  tr('المعلومات تعريفية وتجريبية. لا توجد حالياً بيانات مباشرة عن المباريات أو حالة الملاعب.'): ['This is general demo information. Live match or stadium-status data is not currently available.', 'Ces informations sont générales et données à titre de démonstration. Aucune donnée en direct sur les matchs ou l’état des stades n’est disponible.', 'Esta información es orientativa y de demostración. Actualmente no hay datos en directo sobre partidos o el estado de los estadios.'],
+  tr('المباريات والتنبيهات المباشرة ستحتاج إلى ربط مصدر رسمي للمواعيد والنتائج.'): ['Live matches and alerts will require an official schedule and results data source.', 'Les matchs et alertes en direct nécessiteront une source officielle pour les calendriers et les résultats.', 'Los partidos y avisos en directo requerirán una fuente oficial de horarios y resultados.'],
+  'تعذر فتح الخرائط. تحقق من اتصال الإنترنت.': ['Could not open maps. Check your internet connection.', 'Impossible d’ouvrir les cartes. Vérifiez votre connexion Internet.', 'No se pudieron abrir los mapas. Comprueba tu conexión a Internet.'],
+  'وجهات مغربية تستحق الزيارة 🇲🇦\nاختر مكاناً وافتح موقعه على الخريطة.': ['Moroccan destinations worth visiting 🇲🇦\nChoose a place to view it on the map.', 'Des destinations marocaines à découvrir 🇲🇦\nChoisissez un lieu pour l’afficher sur la carte.', 'Destinos marroquíes que merecen una visita 🇲🇦\nElige un lugar para verlo en el mapa.'],
+  'افتح على الخريطة': ['Open map', 'Ouvrir la carte', 'Abrir mapa'],
+  'هذه اقتراحات تعريفية للزيارة. تحقق من أوقات العمل وشروط الدخول قبل التنقل.': ['These are suggested places to visit. Check opening hours and entry requirements before travelling.', 'Ces lieux sont proposés à titre indicatif. Vérifiez les horaires et les conditions d’accès avant de vous déplacer.', 'Estos son lugares sugeridos para visitar. Comprueba los horarios y las condiciones de acceso antes de desplazarte.'],
 };
 String tr(String source) {
   final values = appTranslations[source];
@@ -820,7 +851,7 @@ class ResultsScreen extends StatelessWidget {
     }).toList();
 
     return Scaffold(
-      appBar: AppBar(title: Text('الرحلات المتاحة')),
+      appBar: AppBar(title: Text(tr('الرحلات المتاحة'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -968,9 +999,9 @@ class TripCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _timeColumn('الانطلاق', trip.departure),
+                _timeColumn(tr('الانطلاق'), trip.departure),
                 Icon(Icons.arrow_forward, color: Colors.grey),
-                _timeColumn('الوصول', trip.arrival),
+                _timeColumn(tr('الوصول'), trip.arrival),
               ],
             ),
             SizedBox(height: 12),
@@ -979,7 +1010,7 @@ class TripCard extends StatelessWidget {
                 Expanded(child: Text(trip.type)),
                 FilledButton(
                   onPressed: onBook,
-                  child: Text('متابعة الحجز'),
+                  child: Text(tr('متابعة الحجز')),
                 ),
               ],
             ),
@@ -1079,7 +1110,7 @@ class _BookingScreenState extends State<BookingScreen> {
     if (name.isEmpty || phone.length < 8) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('يرجى إدخال الاسم ورقم هاتف صحيح'),
+          content: Text(tr('يرجى إدخال الاسم ورقم هاتف صحيح')),
         ),
       );
       return;
@@ -1159,16 +1190,16 @@ class TicketScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _ticketLine('رقم الحجز', booking.reference),
-                    _ticketLine('الشركة', trip.company),
-                    _ticketLine('الانطلاق', trip.origin),
-                    _ticketLine('الوصول', trip.destination),
-                    _ticketLine('ساعة السفر', trip.departure),
+                    _ticketLine(tr('رقم الحجز'), booking.reference),
+                    _ticketLine(tr('الشركة'), trip.company),
+                    _ticketLine(tr('الانطلاق'), cityLabel(trip.origin)),
+                    _ticketLine(tr('الوصول'), cityLabel(trip.destination)),
+                    _ticketLine(tr('ساعة السفر'), trip.departure),
                     _ticketLine(
-                      'التاريخ',
+                      tr('التاريخ'),
                       '${booking.date.day}/${booking.date.month}/${booking.date.year}',
                     ),
-                    _ticketLine('السعر التجريبي', '${trip.price} DH'),
+                    _ticketLine(tr('السعر التجريبي'), '${trip.price} DH'),
                   ],
                 ),
               ),
@@ -1253,7 +1284,7 @@ class BookingsScreen extends StatelessWidget {
                       '${booking.trip.origin} ← ${booking.trip.destination}',
                     ),
                     subtitle: Text(
-                      'المرجع: ${booking.reference}\n'
+                      '${tr('المرجع: ')}${booking.reference}\n'
                       '${booking.trip.company} - ${booking.trip.price} DH',
                     ),
                     isThreeLine: true,
@@ -1326,7 +1357,7 @@ class StadiumScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('رادار ملاعب المغرب')),
+      appBar: AppBar(title: Text(tr('رادار ملاعب المغرب'))),
       body: ListView(
         padding: const EdgeInsets.all(15),
         children: [
@@ -1364,11 +1395,11 @@ class StadiumScreen extends StatelessWidget {
                   child: Icon(Icons.stadium, color: primaryRed),
                 ),
                 title: Text(
-                  stadium.name,
+                  tr(stadium.name),
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
-                  '${stadium.city} • السعة: ${stadium.capacity}',
+                  '${cityLabel(stadium.city)} • ${tr('السعة: ')}${stadium.capacity}',
                 ),
                 trailing: Icon(Icons.arrow_forward_ios, size: 15),
                 onTap: () {
@@ -1431,7 +1462,7 @@ class StadiumDetailsScreen extends StatelessWidget {
             SizedBox(height: 15),
             _detail(Icons.location_city, tr('المدينة'), stadium.city),
             _detail(Icons.people, tr('السعة'), stadium.capacity),
-            _detail(Icons.info_outline, tr('معلومات'), stadium.description),
+            _detail(Icons.info_outline, tr('معلومات'), tr(stadium.description)),
             SizedBox(height: 20),
             Text(
               'المباريات والتنبيهات المباشرة ستحتاج إلى ربط مصدر رسمي للمواعيد والنتائج.',
