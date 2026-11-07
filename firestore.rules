@@ -84,12 +84,18 @@ service cloud.firestore {
         && request.resource.data.rating >= 1
         && request.resource.data.rating <= 5
         && request.resource.data.comment is string;
-      allow update, delete: if signedIn()
+      allow update: if signedIn()
         && resource.data.userId == request.auth.uid
         && request.resource.data.userId == resource.data.userId
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'rating', 'comment'
-        ]);
+        ])
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5
+        && request.resource.data.comment is string;
+      allow delete: if signedIn()
+        && resource.data.userId == request.auth.uid;
     }
 
     match /{document=**} {
