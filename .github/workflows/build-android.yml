@@ -33,10 +33,18 @@ jobs:
           if gradle is None:
               raise SystemExit('Android app Gradle file not found')
           source_gradle = gradle.read_text()
-          source_gradle, ns_count = re.subn(r'namespace\\s*=\\s*[\"\\'][^\"\\']+[\"\\']', f'namespace = "{package_id}"', source_gradle, count=1)
-          source_gradle, app_count = re.subn(r'applicationId\\s*=\\s*[\"\\'][^\"\\']+[\"\\']', f'applicationId = "{package_id}"', source_gradle, count=1)
-          if ns_count != 1 or app_count != 1:
-              raise SystemExit(f'Could not safely set Android package ID (namespace={ns_count}, applicationId={app_count})')
+          lines = source_gradle.splitlines()
+          found_namespace = found_application_id = False
+          for index, line in enumerate(lines):
+              if line.strip().startswith('namespace ='):
+                  lines[index] = f'    namespace = "{package_id}"'
+                  found_namespace = True
+              elif line.strip().startswith('applicationId ='):
+                  lines[index] = f'        applicationId = "{package_id}"'
+                  found_application_id = True
+          if not found_namespace or not found_application_id:
+              raise SystemExit(f'Could not safely set Android package ID (namespace={found_namespace}, applicationId={found_application_id})')
+          source_gradle = '\n'.join(lines) + '\n'
           gradle.write_text(source_gradle)
           PY
           python - <<'PY'
