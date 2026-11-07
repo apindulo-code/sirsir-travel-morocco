@@ -24,7 +24,14 @@ jobs:
 
       - name: Configure Android location and internet permissions
         run: |
-          sed -i '/<application/i\\    <uses-permission android:name="android.permission.INTERNET" />\\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />' android/app/src/main/AndroidManifest.xml
+          python - <<'PY'
+          from pathlib import Path
+          manifest = Path('android/app/src/main/AndroidManifest.xml')
+          source = manifest.read_text()
+          permissions = '    <uses-permission android:name="android.permission.INTERNET" />\\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\\n'
+          source = source.replace('    <application', permissions + '    <application', 1)
+          manifest.write_text(source)
+          PY
 
       - name: Install dependencies
         run: flutter pub get
