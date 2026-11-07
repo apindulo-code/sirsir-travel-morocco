@@ -13,6 +13,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -84,15 +85,6 @@ jobs:
       - name: Run Flutter tests
         run: flutter test
 
-      - name: Verify Android app launch on emulator
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 35
-          arch: x86_64
-          profile: pixel_2
-          disable-animations: true
-          script: flutter test integration_test/app_launch_test.dart
-
       - name: Build release APK
         run: flutter build apk --release
 
@@ -112,3 +104,15 @@ jobs:
           name: sirsir-travel-morocco-web
           path: build/web/
           if-no-files-found: error
+
+
+      # Keep deliverables available even if the emulator smoke test is slow or fails.
+      - name: Verify Android app launch on emulator
+        timeout-minutes: 20
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          script: flutter test integration_test/app_launch_test.dart
