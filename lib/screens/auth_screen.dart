@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
+import 'legal_document_screen.dart';
 
 /// Sign-in screen. Email/password and SMS are available when their providers
 /// are enabled in the linked Firebase project.
@@ -355,6 +356,36 @@ class _AuthScreenState extends State<AuthScreen> {
                 const Text('لن يتم إنشاء حجز نقل مؤكد إلا عبر منصة الناقل الرسمية. حساب SirSir مخصص لخدمات التطبيق وحفظ بياناتك.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey, fontSize: 12, height: 1.5)),
+                const SizedBox(height: 8),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const LegalDocumentScreen(
+                            title: 'سياسة الخصوصية',
+                            assetPath: 'docs/PRIVACY_POLICY_AR.md',
+                          ),
+                        ),
+                      ),
+                      child: const Text('سياسة الخصوصية'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const LegalDocumentScreen(
+                            title: 'شروط الاستخدام',
+                            assetPath: 'docs/TERMS_AR.md',
+                          ),
+                        ),
+                      ),
+                      child: const Text('شروط الاستخدام'),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
