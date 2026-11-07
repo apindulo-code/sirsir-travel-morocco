@@ -29,19 +29,19 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
   late final AnimationController ticker;
 
   @override
-  void initState() { super.initState(); ticker = AnimationController(vsync:this,duration:const Duration(seconds:22))..repeat(); _loadCity(city); }
+  void initState() { super.initState(); ticker = AnimationController(vsync:this,duration:const Duration(seconds:22))..repeat(); WidgetsBinding.instance.addPostFrameCallback((_) => _gps()); }
   @override
   void dispose() { ticker.dispose(); super.dispose(); }
 
   Future<void> _gps() async {
     try {
-      if (!await Geolocator.isLocationServiceEnabled()) { _msg('فعّل GPS أو اختر المدينة يدوياً'); return; }
+      if (!await Geolocator.isLocationServiceEnabled()) { _msg('فعّل GPS أو اختر المدينة يدوياً'); await _loadCity(city); return; }
       var p = await Geolocator.checkPermission();
       if (p == LocationPermission.denied) p = await Geolocator.requestPermission();
-      if (p == LocationPermission.denied || p == LocationPermission.deniedForever) { _msg('إذن الموقع غير متاح؛ اختر المدينة يدوياً'); return; }
+      if (p == LocationPermission.denied || p == LocationPermission.deniedForever) { _msg('إذن الموقع غير متاح؛ اختر المدينة يدوياً'); await _loadCity(city); return; }
       final pos = await Geolocator.getCurrentPosition(locationSettings:const LocationSettings(accuracy:LocationAccuracy.medium));
       await _load(pos.latitude,pos.longitude,'موقعي الحالي');
-    } catch (_) { _msg('تعذر تحديد الموقع. اختر المدينة يدوياً'); }
+    } catch (_) { _msg('تعذر تحديد الموقع. اختر المدينة يدوياً'); await _loadCity(city); }
   }
 
   Future<void> _loadCity(String name) async { city=name; final p=cities[name]!; await _load(p[0],p[1],name); }
