@@ -1,11 +1,14 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'services/travel_news_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 
 class TravelDashboard extends StatefulWidget {
-  const TravelDashboard({super.key});
+  const TravelDashboard({super.key, this.language = 'ar'});
+
+  final String language;
   @override
   State<TravelDashboard> createState() => _TravelDashboardState();
 }
@@ -27,6 +30,7 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
   String? error;
   Map<String,dynamic>? weather, sea, prayer;
   String location = 'المدينة المختارة';
+  List<TravelNewsItem> headlines = [];
   late final AnimationController ticker;
 
   @override
@@ -37,7 +41,7 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
       duration: const Duration(seconds: 22),
     )..repeat();
     // Restore the last selected city. The user can still request GPS manually.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _restoreCity());
+    WidgetsBinding.instance.addPostFrameCallback((_) { _restoreCity(); _loadNews(); });
   }
   @override
   void dispose() { ticker.dispose(); super.dispose(); }
@@ -114,6 +118,15 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
         setState(() { loading = false; });
         _msg('تعذر تحديد الموقع. تأكد من تشغيل GPS ومنح الإذن، أو اختر المدينة يدوياً.');
       }
+    }
+  }
+
+  Future<void> _loadNews() async {
+    try {
+      final items = await TravelNewsService().fetchLatest(language: widget.language);
+      if (mounted) setState(() => headlines = items);
+    } catch (_) {
+      if (mounted) setState(() => headlines = []);
     }
   }
 
@@ -197,11 +210,30 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
     final md=sea?['daily'] as Map<String,dynamic>?;
     return Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
       Card(color:const Color(0xFF17243A),child:Padding(padding:const EdgeInsets.all(14),child:Column(children:[
-        Row(children:[const Icon(Icons.travel_explore,color:Colors.white),const SizedBox(width:8),const Expanded(child:Text('مركز معلومات السفر',style:TextStyle(color:Colors.white,fontWeight:FontWeight.bold,fontSize:17))),IconButton(onPressed:loading?null:()=>_loadCity(city),icon:const Icon(Icons.refresh,color:Colors.white))]),
+        Row(children:[const Icon(Icons.travel_explore,color:Colors.white),const SizedBox(width:8),const Expanded(child:Text('مركز معلومات السفر',style:TextStyle(color:Colors.white,fontWeight:FontWeight.bold,fontSize:17))),IconButton(onPressed:loading?null:(){_loadCity(city);_loadNews();},icon:const Icon(Icons.refresh,color:Colors.white))]),
         Row(children:[Expanded(child:DropdownButton<String>(value:city,isExpanded:true,dropdownColor:Colors.white,underline:const SizedBox.shrink(),style:const TextStyle(color:Colors.white),items:cities.keys.map((n)=>DropdownMenuItem(value:n,child:Text(n,style:const TextStyle(color:Colors.black)))).toList(),onChanged:loading?null:(v){if(v!=null)_loadCity(v);})),OutlinedButton.icon(onPressed:loading?null:_gps,icon:const Icon(Icons.my_location),label:const Text('موقعي'),style:OutlinedButton.styleFrom(foregroundColor:Colors.white))]),
         Align(alignment:Alignment.centerRight,child:Text(location,style:const TextStyle(color:Colors.white70,fontSize:11))),
         const SizedBox(height:8),
-        SizedBox(height:30,child:ClipRect(child:AnimatedBuilder(animation:ticker,builder:(context,_){return LayoutBuilder(builder:(context,b){return Stack(children:[Positioned(right:b.maxWidth-ticker.value*(b.maxWidth+750),top:5,child:const Text('تنبيهات السفر • تحقق من الطقس قبل الانطلاق • راجع مواعيد النقل من المصادر الرسمية • تابع تحذيرات البحر المحلية',maxLines:1,style:TextStyle(color:Colors.white,fontSize:12)))]);});}))),
+        SizedBox(height:30,child:ClipRect(child:AnimatedBuilder(animation:ticker,builder:(context,_){
+          final tickerText = headlines.isEmpty
+              ? 'تنبيهات السفر • تحقق من الطقس قبل الانطلاق • راجع مواعيد النقل من المصادر الرسمية • تابع تحذيرات البحر المحلية'
+              : headlines.map((item) => '${item.title} • ${item.source}').join('     |     ');
+          return LayoutBuilder(builder:(context,b){
+            return Stack(children:[
+              Positioned(
+                right:b.maxWidth-ticker.value*(b.maxWidth+1800),
+                top:5,
+                child: GestureDetector(
+                  onTap: headlines.isEmpty ? null : () async {
+                    final first = headlines.first;
+                    await launchUrl(Uri.parse(first.url), mode: LaunchMode.externalApplication);
+                  },
+                  child: Text(tickerText,maxLines:1,style:const TextStyle(color:Colors.white,fontSize:12)),
+                ),
+              ),
+            ]);
+          });
+        }))),
       ]))),
       if(loading)const Padding(padding:EdgeInsets.all(20),child:Center(child:CircularProgressIndicator())),
       if(error!=null)Card(child:Padding(padding:const EdgeInsets.all(12),child:Text(error!))),
