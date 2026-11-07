@@ -95,6 +95,10 @@ class SirSirApp extends StatelessWidget {
       valueListenable: appLanguage,
       builder: (context, language, _) => MaterialApp(
       locale: Locale(language),
+      builder: (context, child) => Directionality(
+        textDirection: language == 'ar' ? TextDirection.rtl : TextDirection.ltr,
+        child: child ?? const SizedBox.shrink(),
+      ),
       title: 'SirSir Travel Morocco',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -673,52 +677,52 @@ class TouristPlace {
 
 const List<TouristPlace> touristPlaces = [
   TouristPlace(
-    name: tr('المدينة العتيقة'),
+    name: 'المدينة العتيقة',
     city: 'تطوان',
     description: 'أزقة تاريخية وأسواق تقليدية، وهي جزء من التراث العالمي لليونسكو.',
   ),
   TouristPlace(
-    name: tr('قصبة شفشاون'),
+    name: 'قصبة شفشاون',
     city: 'شفشاون',
     description: 'قصبة تاريخية وحديقة هادئة في قلب المدينة الزرقاء.',
   ),
   TouristPlace(
-    name: tr('رأس الماء'),
+    name: 'رأس الماء',
     city: 'شفشاون',
     description: 'منطقة طبيعية معروفة بمياهها الجارية وإطلالاتها الجبلية.',
   ),
   TouristPlace(
-    name: tr('مغارة هرقل'),
+    name: 'مغارة هرقل',
     city: 'طنجة',
     description: 'مغارة ساحلية شهيرة قرب رأس سبارطيل.',
   ),
   TouristPlace(
-    name: tr('رأس سبارطيل'),
+    name: 'رأس سبارطيل',
     city: 'طنجة',
     description: 'منطقة ساحلية تطل على المحيط الأطلسي ومضيق جبل طارق.',
   ),
   TouristPlace(
-    name: tr('ساحة جامع الفنا'),
+    name: 'ساحة جامع الفنا',
     city: 'مراكش',
     description: 'ساحة نابضة بالحياة قرب أسواق المدينة العتيقة.',
   ),
   TouristPlace(
-    name: tr('صومعة حسان'),
+    name: 'صومعة حسان',
     city: 'الرباط',
     description: 'معلمة تاريخية بارزة بجوار ضريح محمد الخامس.',
   ),
   TouristPlace(
-    name: tr('باب بوجلود'),
+    name: 'باب بوجلود',
     city: 'فاس',
     description: 'بوابة شهيرة تؤدي إلى أزقة فاس البالي التاريخية.',
   ),
   TouristPlace(
-    name: tr('قصبة أكادير أوفلا'),
+    name: 'قصبة أكادير أوفلا',
     city: 'أكادير',
     description: 'موقع مرتفع يوفر إطلالة واسعة على مدينة أكادير والخليج.',
   ),
   TouristPlace(
-    name: tr('مسجد الحسن الثاني'),
+    name: 'مسجد الحسن الثاني',
     city: 'الدار البيضاء',
     description: 'معلمة معمارية بارزة على ساحل المحيط الأطلسي.',
   ),
