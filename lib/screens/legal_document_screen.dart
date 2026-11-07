@@ -13,7 +13,7 @@ class LegalDocumentScreen extends StatelessWidget {
 
   String _plainText(String markdown) {
     return markdown
-        .replaceAll(RegExp(r'^#{1,6}\\s*', multiLine: true), '')
+        .replaceAll(RegExp(r'^#{1,6}\s*', multiLine: true), '')
         .replaceAll('**', '')
         .replaceAll('> ', '')
         .trim();
