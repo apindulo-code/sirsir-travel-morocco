@@ -7,6 +7,8 @@ final ValueNotifier<String> appLanguage = ValueNotifier<String>('ar');
 const Map<String, List<String>> appTranslations = {
   'سير سير 🇲🇦': ['SirSir 🇲🇦', 'SirSir 🇲🇦', 'SirSir 🇲🇦'],
   'حجوزاتي': ['My bookings', 'Mes réservations', 'Mis reservas'],
+  'خريطة المغرب': ['Map of Morocco', 'Carte du Maroc', 'Mapa de Marruecos'],
+  'اللغة': ['Language', 'Langue', 'Idioma'],
   'اكتشف المغرب معنا': ['Discover Morocco with us', 'Découvrez le Maroc avec nous', 'Descubre Marruecos con nosotros'],
   'رحلتك القادمة تبدأ من هنا': ['Your next journey starts here', 'Votre prochain voyage commence ici', 'Tu próximo viaje comienza aquí'],
   'من الشمال إلى الجنوب': ['From north to south', 'Du nord au sud', 'De norte a sur'],
@@ -315,9 +317,23 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           PopupMenuButton<String>(
-            tooltip: 'Choose language / Choisir la langue',
-            icon: Icon(Icons.language),
+            tooltip: tr('اللغة'),
             onSelected: (value) => appLanguage.value = value,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.language, color: Colors.white),
+                  const SizedBox(width: 4),
+                  Text(
+                    {'ar': 'العربية', 'en': 'EN', 'fr': 'FR', 'es': 'ES'}[appLanguage.value] ?? 'العربية',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  const Icon(Icons.arrow_drop_down, color: Colors.white),
+                ],
+              ),
+            ),
             itemBuilder: (context) => const [
               PopupMenuItem(value: 'ar', child: Text('العربية')),
               PopupMenuItem(value: 'en', child: Text('English')),
@@ -517,6 +533,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+            SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                icon: const Icon(Icons.map_outlined),
+                label: Text(tr('خريطة المغرب')),
+                style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
+                onPressed: _openMoroccoMap,
+              ),
+            ),
             SizedBox(height: 18),
             Card(
               color: Colors.white,
@@ -668,6 +694,14 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _openMoroccoMap() async {
+    final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent('Tourist attractions Morocco')}');
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      _message(tr('تعذر فتح الخرائط. تحقق من اتصال الإنترنت.'));
+    }
   }
 
   Future<void> _openOfficialBooking(String url) async {
