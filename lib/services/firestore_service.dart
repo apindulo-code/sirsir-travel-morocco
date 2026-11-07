@@ -158,8 +158,14 @@ class FirestoreService {
     });
   }
 
-  Stream<QuerySnapshot<Map<String, dynamic>>> watchReviews() =>
-      _db.collection('reviews').snapshots();
+  /// Reviews are private to their author because documents contain a UID.
+  Stream<QuerySnapshot<Map<String, dynamic>>> watchReviews() {
+    final uid = _uid;
+    return _db
+        .collection('reviews')
+        .where('userId', isEqualTo: uid)
+        .snapshots();
+  }
 
   Future<String> addReview({
     required String subjectId,
