@@ -35,15 +35,26 @@ class FirestoreService {
     final user = _auth.currentUser;
     if (user == null) throw StateError('يجب تسجيل الدخول أولاً.');
 
-    await _users.doc(user.uid).set({
-      'uid': user.uid,
+    final ref = _users.doc(user.uid);
+    final existing = await ref.get();
+    final profile = <String, dynamic>{
       'displayName': displayName ?? user.displayName ?? '',
-      'email': user.email,
       'phoneNumber': user.phoneNumber,
       'preferredLanguage': preferredLanguage ?? 'ar',
       'updatedAt': FieldValue.serverTimestamp(),
-      'createdAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    };
+
+    if (existing.exists) {
+      // Existing-profile updates are deliberately limited by firestore.rules.
+      await ref.update(profile);
+    } else {
+      await ref.set({
+        ...profile,
+        'uid': user.uid,
+        'email': user.email,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> watchDestinations() =>
