@@ -44,13 +44,67 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
 
   Future<void> _gps() async {
     try {
-      if (!await Geolocator.isLocationServiceEnabled()) { _msg('فعّل GPS أو اختر المدينة يدوياً'); await _loadCity(city); return; }
-      var p = await Geolocator.checkPermission();
-      if (p == LocationPermission.denied) p = await Geolocator.requestPermission();
-      if (p == LocationPermission.denied || p == LocationPermission.deniedForever) { _msg('إذن الموقع غير متاح؛ اختر المدينة يدوياً'); await _loadCity(city); return; }
-      final pos = await Geolocator.getCurrentPosition(locationSettings:const LocationSettings(accuracy:LocationAccuracy.medium));
-      await _load(pos.latitude,pos.longitude,'موقعي الحالي');
-    } catch (_) { _msg('تعذر تحديد الموقع. اختر المدينة يدوياً'); await _loadCity(city); }
+      // If GPS is switched off, guide the user to Android location settings
+      // instead of silently falling back to manual city selection.
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        if (!mounted) return;
+        final enableGps = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('خدمة الموقع متوقفة'),
+            content: const Text('فعّل خدمة الموقع (GPS) في هاتفك، ثم اضغط «موقعي» مرة أخرى.'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('لاحقاً')),
+              FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('فتح إعدادات الموقع')),
+            ],
+          ),
+        );
+        if (enableGps == true) await Geolocator.openLocationSettings();
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        final openSettings = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('إذن الموقع مطلوب'),
+            content: const Text('سبق رفض إذن الموقع نهائياً. افتح إعدادات التطبيق واسمح بالوصول إلى الموقع أثناء استخدام التطبيق، ثم حاول مجدداً.'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('إلغاء')),
+              FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('إعدادات التطبيق')),
+            ],
+          ),
+        );
+        if (openSettings == true) await Geolocator.openAppSettings();
+        return;
+      }
+
+      if (permission == LocationPermission.denied) {
+        _msg('لم يتم منح إذن الموقع. يمكنك المحاولة مجدداً أو اختيار المدينة يدوياً.');
+        return;
+      }
+
+      if (!mounted) return;
+      setState(() { loading = true; error = null; });
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 20),
+        ),
+      );
+      await _load(position.latitude, position.longitude, 'موقعي الحالي');
+    } catch (_) {
+      if (mounted) {
+        setState(() { loading = false; });
+        _msg('تعذر تحديد الموقع. تأكد من تشغيل GPS ومنح الإذن، أو اختر المدينة يدوياً.');
+      }
+    }
   }
 
   Future<void> _loadCity(String name) async { city=name; final p=cities[name]!; await _load(p[0],p[1],name); }
