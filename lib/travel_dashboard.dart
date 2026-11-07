@@ -179,6 +179,14 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
   void _msg(String s){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(s)));}
   String _weatherName(dynamic v){final c=(v as num?)?.toInt()??-1;if(c==0)return'صحو';if(c<=3&&c>=1)return'غائم';if(c==45||c==48)return'ضباب';if(c>=51&&c<=67)return'رذاذ أو أمطار';if(c>=71&&c<=86)return'ثلوج';if(c>=95)return'عواصف رعدية';return'متغير';}
   String _advice(Map<String,dynamic> c){final w=(c['wind_speed_10m'] as num?)?.toDouble()??0;final rain=(c['precipitation'] as num?)?.toDouble()??0;final code=(c['weather_code'] as num?)?.toInt()??0;if(w>=55||code>=95)return'تنبيه: قد تؤثر الظروف الجوية على السفر. راجع النشرات الرسمية.';if(w>=35||rain>=2||[61,63,65,80,81,82].contains(code))return'الحذر مستحسن: تحقق من الطقس والطرق قبل الانطلاق.';return'المؤشرات الجوية تبدو ملائمة مبدئياً؛ تابع تحديثات الطريق.';}
+  String _seaAdvice(dynamic value) {
+    final height = (value as num?)?.toDouble();
+    if (height == null) return 'لا تتوفر قراءة موثوقة للأمواج في هذه النقطة حالياً.';
+    if (height >= 2.5) return 'الأمواج مرتفعة: تجنب الاقتراب من الصخور والحواجز، واتبع تعليمات السلطات المحلية.';
+    if (height >= 1.5) return 'البحر مضطرب نسبياً: توخ الحذر قرب الشاطئ والصخور، ولا تعتمد على هذه القراءة وحدها.';
+    if (height >= 0.8) return 'حالة الموج متوسطة تقريباً؛ تحقق من الرياح والمد والجزر والتنبيهات المحلية.';
+    return 'ارتفاع الموج منخفض وفق القراءة الحالية، لكن ذلك لا يضمن سلامة السباحة أو الصيد.';
+  }
 
   @override
   Widget build(BuildContext context){
@@ -213,6 +221,7 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
           const Text('حالة البحر',style:TextStyle(fontWeight:FontWeight.bold,fontSize:16)),
           if(mc?['wave_height']==null)const Text('بيانات الأمواج غير متاحة لهذه النقطة. اختر مدينة ساحلية.'),
           if(mc?['wave_height']!=null)...[Text('ارتفاع الموج: ${mc!['wave_height']} متر'),if(mc['wave_period']!=null)Text('فترة الموج: ${mc['wave_period']} ثانية'),if(md?['wave_height_max'] is List)Text('أقصى ارتفاع متوقع غداً: ${(md!['wave_height_max'] as List).length>1?(md['wave_height_max'] as List)[1]:'--'} متر')],
+          if(mc?['wave_height']!=null)Padding(padding:const EdgeInsets.only(top:8),child:Text(_seaAdvice(mc?['wave_height']),style:const TextStyle(fontWeight:FontWeight.w600))),
           const Text('ليست بديلاً عن تحذيرات الموانئ أو تعليمات السلامة والإنقاذ.',style:TextStyle(color:Colors.grey,fontSize:11)),
         ]))),
         Card(child:Padding(padding:const EdgeInsets.all(12),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
