@@ -1,6 +1,6 @@
 # إعداد Firebase لتطبيق SirSir Travel Morocco
 
-هذه الملفات تجهّز جانباً من المشروع، لكنها لا تربط التطبيق بمشروع Firebase تلقائياً. يلزم اختيار مشروع Firebase وتسجيل تطبيق Android فيه، ثم توليد ملف الإعدادات الخاص به.
+تم تسجيل تطبيق Android وتطبيق Web في مشروع Firebase `sirsir-travel-morocco`، وأضيفت إعداداتهما إلى `lib/firebase_options.dart`.
 
 ## ما تم تجهيزه في المستودع
 
