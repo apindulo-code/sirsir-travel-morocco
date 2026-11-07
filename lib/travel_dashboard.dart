@@ -98,13 +98,42 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
           timeLimit: Duration(seconds: 20),
         ),
       );
-      await _load(position.latitude, position.longitude, 'موقعي الحالي');
+      final nearestCity = _nearestCity(position.latitude, position.longitude);
+      city = nearestCity;
+      try {
+        final preferences = await SharedPreferences.getInstance();
+        await preferences.setString('travel_city', nearestCity);
+      } catch (_) {}
+      await _load(
+        position.latitude,
+        position.longitude,
+        'موقعك الحالي • $nearestCity',
+      );
     } catch (_) {
       if (mounted) {
         setState(() { loading = false; });
         _msg('تعذر تحديد الموقع. تأكد من تشغيل GPS ومنح الإذن، أو اختر المدينة يدوياً.');
       }
     }
+  }
+
+  String _nearestCity(double latitude, double longitude) {
+    var nearest = city;
+    var shortestDistance = double.infinity;
+    for (final entry in cities.entries) {
+      final point = entry.value;
+      final distance = Geolocator.distanceBetween(
+        latitude,
+        longitude,
+        point[0],
+        point[1],
+      );
+      if (distance < shortestDistance) {
+        shortestDistance = distance;
+        nearest = entry.key;
+      }
+    }
+    return nearest;
   }
 
   Future<void> _restoreCity() async {
