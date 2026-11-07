@@ -1,5 +1,9 @@
 name: Build Android APK
 
+concurrency:
+  group: sirsir-travel-morocco-release
+  cancel-in-progress: true
+
 on:
   workflow_dispatch:
   push:
