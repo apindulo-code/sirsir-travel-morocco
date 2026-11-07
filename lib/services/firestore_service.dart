@@ -57,6 +57,32 @@ class FirestoreService {
     }
   }
 
+  /// Deletes the signed-in user's app profile and their booking requests.
+  /// Firebase Authentication may require a recent sign-in before deleting the account.
+  Future<void> deleteCurrentUserDataAndAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) throw StateError('يجب تسجيل الدخول أولاً.');
+
+    final bookings = await _db
+        .collection('bookings')
+        .where('userId', isEqualTo: user.uid)
+        .get();
+
+    for (var offset = 0; offset < bookings.docs.length; offset += 400) {
+      final batch = _db.batch();
+      final end = (offset + 400 < bookings.docs.length)
+          ? offset + 400
+          : bookings.docs.length;
+      for (final doc in bookings.docs.sublist(offset, end)) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+    }
+
+    await _users.doc(user.uid).delete();
+    await user.delete();
+  }
+
   Stream<QuerySnapshot<Map<String, dynamic>>> watchDestinations() =>
       _db.collection('destinations').snapshots();
 
