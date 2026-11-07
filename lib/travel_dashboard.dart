@@ -32,6 +32,8 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
   Map<String,dynamic>? weather, sea, prayer;
   String location = 'المدينة المختارة';
   List<TravelNewsItem> headlines = [];
+  int _weatherRequestGeneration = 0;
+  int _newsRequestGeneration = 0;
   late final AnimationController ticker;
 
   @override
@@ -129,11 +131,14 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
   }
 
   Future<void> _loadNews() async {
+    final requestGeneration = ++_newsRequestGeneration;
     try {
       final items = await TravelNewsService().fetchLatest(language: widget.language);
-      if (mounted) setState(() => headlines = items);
+      if (!mounted || requestGeneration != _newsRequestGeneration) return;
+      setState(() => headlines = items);
     } catch (_) {
-      if (mounted) setState(() => headlines = []);
+      if (!mounted || requestGeneration != _newsRequestGeneration) return;
+      setState(() => headlines = []);
     }
   }
 
@@ -177,6 +182,8 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
     await _load(p[0], p[1], name);
   }
   Future<void> _load(double lat,double lon,String label) async {
+    final requestGeneration = ++_weatherRequestGeneration;
+    if (!mounted) return;
     setState(() { loading=true; error=null; location=label; });
     try {
       final w=Uri.https('api.open-meteo.com','/v1/forecast',{
@@ -188,13 +195,48 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
       final m=Uri.https('marine-api.open-meteo.com','/v1/marine',{
         'latitude':'$lat','longitude':'$lon','current':'wave_height,wave_period',
         'daily':'wave_height_max','forecast_days':'5','timezone':'auto'});
-      final r=await Future.wait([http.get(w).timeout(const Duration(seconds:15)),http.get(p).timeout(const Duration(seconds:15)),http.get(m).timeout(const Duration(seconds:15))]);
-      if(r[0].statusCode!=200 || r[1].statusCode!=200) throw Exception();
-      final pw=jsonDecode(r[1].body) as Map<String,dynamic>;
-      if((pw['code'] as num?)!=200) throw Exception();
-      if(!mounted)return;
-      setState(() { weather=jsonDecode(r[0].body) as Map<String,dynamic>; prayer=pw['data'] as Map<String,dynamic>; sea=r[2].statusCode==200?jsonDecode(r[2].body) as Map<String,dynamic>:null; loading=false; });
-    } catch (_) { if(mounted)setState((){loading=false;error='تعذر جلب البيانات. تحقق من الإنترنت ثم حدّث الصفحة.';}); }
+      final responses = await Future.wait([
+        http.get(w).timeout(const Duration(seconds: 15)),
+        http.get(p).timeout(const Duration(seconds: 15)),
+      ]);
+      if (!mounted || requestGeneration != _weatherRequestGeneration) return;
+      if (responses[0].statusCode != 200 || responses[1].statusCode != 200) {
+        throw const FormatException('Weather or prayer service unavailable');
+      }
+      final weatherPayload = jsonDecode(responses[0].body) as Map<String, dynamic>;
+      final prayerPayload = jsonDecode(responses[1].body) as Map<String, dynamic>;
+      final prayerData = prayerPayload['data'];
+      if ((prayerPayload['code'] as num?) != 200 ||
+          weatherPayload['current'] is! Map<String, dynamic> ||
+          weatherPayload['daily'] is! Map<String, dynamic> ||
+          prayerData is! Map<String, dynamic> ||
+          prayerData['timings'] is! Map<String, dynamic>) {
+        throw const FormatException('Unexpected weather or prayer response');
+      }
+      Map<String, dynamic>? marineData;
+      try {
+        final marineResponse = await http.get(m).timeout(const Duration(seconds: 12));
+        if (marineResponse.statusCode == 200) {
+          final decoded = jsonDecode(marineResponse.body);
+          if (decoded is Map<String, dynamic>) marineData = decoded;
+        }
+      } catch (_) {
+        marineData = null;
+      }
+      if (!mounted || requestGeneration != _weatherRequestGeneration) return;
+      setState(() {
+        weather = weatherPayload;
+        prayer = prayerData;
+        sea = marineData;
+        loading = false;
+      });
+    } catch (_) {
+      if (!mounted || requestGeneration != _weatherRequestGeneration) return;
+      setState(() {
+        loading = false;
+        error = 'تعذر جلب البيانات. تحقق من الإنترنت ثم حدّث الصفحة.';
+      });
+    }
   }
   void _msg(String s){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(s)));}
   String _weatherName(dynamic v){final c=(v as num?)?.toInt()??-1;if(c==0)return'صحو';if(c<=3&&c>=1)return'غائم';if(c==45||c==48)return'ضباب';if(c>=51&&c<=67)return'رذاذ أو أمطار';if(c>=71&&c<=86)return'ثلوج';if(c>=95)return'عواصف رعدية';return'متغير';}
