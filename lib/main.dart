@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -126,26 +127,47 @@ String cityLabel(String city) {
   };
   final values = names[city];
   final index = {'en': 0, 'fr': 1, 'es': 2}[appLanguage.value] ?? -1;
-  return values == null || index < 0 ? city : values[index];
-}
-
-
-Future<void> main() async {
+  return values == null || index < 0 ? ciFuture<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final preferences = await SharedPreferences.getInstance();
-  final savedLanguage = preferences.getString('app_language');
-  if (savedLanguage != null && ['ar', 'en', 'fr', 'es'].contains(savedLanguage)) {
-    appLanguage.value = savedLanguage;
+
+  // Keep startup failures visible in Android logcat instead of silently
+  // terminating before the first Flutter frame.
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    debugPrint('SirSir Flutter startup/runtime error: ${details.exceptionAsString()}');
+    debugPrintStack(stackTrace: details.stack);
+  };
+  ui.PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint('SirSir uncaught platform error: $error');
+    debugPrintStack(stackTrace: stack);
+    return false;
+  };
+
+  // Preferences are optional: a plugin/storage failure must not prevent the
+  // public travel dashboard from opening.
+  try {
+    final preferences = await SharedPreferences.getInstance();
+    final savedLanguage = preferences.getString('app_language');
+    if (savedLanguage != null && ['ar', 'en', 'fr', 'es'].contains(savedLanguage)) {
+      appLanguage.value = savedLanguage;
+    }
+  } catch (error, stack) {
+    debugPrint('SirSir preferences unavailable during startup: $error');
+    debugPrintStack(stackTrace: stack);
   }
-  // Firebase is initialized when valid project options are available, but a
-  // backend outage must never prevent the public travel dashboard from opening.
+
+  // Firebase is optional for public browsing. Authentication and cloud
+  // bookings are enabled only after successful native initialization.
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     firebaseReady = true;
-  } catch (error) {
-    debugPrint('Firebase initialization unavailable: $error');
+    debugPrint('SirSir Firebase initialized successfully.');
+  } catch (error, stack) {
+    debugPrint('SirSir Firebase initialization unavailable: $error');
+    debugPrintStack(stackTrace: stack);
     firebaseReady = false;
   }
+
   runApp(const SirSirApp());
 }
 
