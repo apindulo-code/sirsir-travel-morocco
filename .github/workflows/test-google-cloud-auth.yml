@@ -58,3 +58,9 @@ jobs:
           else
             echo "Default Firestore database is not available yet, or the service account lacks read permission."
           fi
+
+      - name: Enable Firebase APIs if authorized (no database creation)
+        continue-on-error: true
+        shell: bash
+        run: |
+          gcloud services enable firestore.googleapis.com identitytoolkit.googleapis.com --project=sirsir-travel-morocco
