@@ -57,8 +57,8 @@ flutter build web --release
 2. فعّل Email/Password وPhone من Firebase Authentication.
 3. أضف بصمات SHA-1 وSHA-256 لتطبيق Android لاستخدام التحقق الهاتفي.
 4. أنشئ قاعدة Firestore وانشر `firestore.rules` و`firestore.indexes.json`.
-5. لتفعيل حسابات الويب، سجّل تطبيق Web في Firebase وولّد إعدادات الويب عبر FlutterFire CLI؛ الإعداد الموجود حالياً خاص بـ Android.
-6. اختبر قواعد الأمان وتدفقات المصادقة قبل استقبال المستخدمين.
+5. تم تسجيل تطبيق Web في Firebase وإضافة إعداداته إلى `lib/firebase_options.dart`؛ أصبح الكود يختار إعدادات Android أو Web تلقائياً.
+6. انشر قواعد Firestore بعد مراجعتها واختبر التسجيل بالبريد والهاتف على Android والويب قبل استقبال المستخدمين.
 
 راجع [دليل إعداد Firebase بالعربية](FIREBASE_SETUP_AR.md).
 
