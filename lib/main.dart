@@ -193,7 +193,7 @@ class SirSirApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const HomeScreen(),
+      home: HomeScreen(),
     ));
   }
 }
@@ -445,7 +445,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-            const TravelDashboard(),
+            TravelDashboard(language: appLanguage.value),
             SizedBox(height: 22),
             Text(
               tr('ابحث عن رحلتك'),
