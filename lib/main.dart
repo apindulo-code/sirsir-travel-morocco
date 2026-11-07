@@ -660,6 +660,32 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
+                    SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _openOfficialBooking('https://www.adm.co.ma/fr'),
+                            icon: Icon(Icons.add_road),
+                            label: Text('الطرق السيارة'),
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _openOfficialBooking('https://www.royalairmaroc.com/'),
+                            icon: Icon(Icons.flight),
+                            label: Text('الخطوط الملكية'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: () => _openOfficialBooking('https://www.visitmorocco.com/ar'),
+                      icon: Icon(Icons.travel_explore),
+                      label: Text('المكتب الوطني المغربي للسياحة'),
+                    ),
                   ],
                 ),
               ),
