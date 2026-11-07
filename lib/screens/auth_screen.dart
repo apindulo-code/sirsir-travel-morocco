@@ -232,6 +232,8 @@ class _AuthScreenState extends State<AuthScreen> {
                       } else {
                         _message(_friendlyError(e));
                       }
+                    } on StateError catch (e) {
+                      _message(e.message);
                     } catch (_) {
                       _message('تعذر حذف الحساب. تحقق من قواعد Firestore ثم حاول مجدداً.');
                     } finally {
