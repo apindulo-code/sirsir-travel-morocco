@@ -83,3 +83,13 @@ jobs:
           name: sirsir-travel-morocco-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
+
+      - name: Build responsive web app
+        run: flutter build web --release
+
+      - name: Upload web app
+        uses: actions/upload-artifact@v4
+        with:
+          name: sirsir-travel-morocco-web
+          path: build/web/
+          if-no-files-found: error
