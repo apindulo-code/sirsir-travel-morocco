@@ -43,6 +43,8 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
 
   String _origin = 'طنجة';
   String _destination = 'الدار البيضاء';
+  final MapController _mapController = MapController();
+  bool _mapReady = false;
   bool _loading = false;
   String? _error;
   List<LatLng> _route = [];
@@ -90,6 +92,16 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
         _distanceKm = (first['distance'] as num).toDouble() / 1000;
         _durationMinutes = (first['duration'] as num).toDouble() / 60;
         _loading = false;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _mapReady && points.isNotEmpty) {
+          _mapController.fitCamera(
+            CameraFit.bounds(
+              bounds: LatLngBounds.fromPoints(points),
+              padding: const EdgeInsets.all(42),
+            ),
+          );
+        }
       });
     } catch (_) {
       if (!mounted) return;
@@ -204,9 +216,11 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
           ),
           Expanded(
             child: FlutterMap(
+              mapController: _mapController,
               options: MapOptions(
                 initialCenter: center,
                 initialZoom: _route.isEmpty ? 5.4 : 6.2,
+                onMapReady: () => _mapReady = true,
               ),
               children: [
                 TileLayer(
