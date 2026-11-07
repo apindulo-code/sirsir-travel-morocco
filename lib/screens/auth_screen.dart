@@ -200,7 +200,49 @@ class _AuthScreenState extends State<AuthScreen> {
                   label: const Text('تسجيل الخروج'),
                 ),
                 const SizedBox(height: 12),
-                const Text('يمكنك حذف حسابك وطلب حذف بياناتك من خلال التواصل مع دعم التطبيق عند إطلاق الخدمة.',
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                  onPressed: _busy ? null : () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (dialogContext) => AlertDialog(
+                        title: const Text('حذف الحساب نهائياً؟'),
+                        content: const Text('سيتم حذف ملفك الشخصي وطلبات الحجز المرتبطة بحسابك. لا يمكن التراجع عن هذه العملية.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(dialogContext, false),
+                            child: const Text('إلغاء'),
+                          ),
+                          FilledButton(
+                            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                            onPressed: () => Navigator.pop(dialogContext, true),
+                            child: const Text('حذف الحساب'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirmed != true || !mounted) return;
+                    setState(() => _busy = true);
+                    try {
+                      await FirestoreService().deleteCurrentUserDataAndAccount();
+                      _message('تم حذف الحساب وبيانات الحجوزات المرتبطة به.');
+                    } on FirebaseAuthException catch (e) {
+                      if (e.code == 'requires-recent-login') {
+                        _message('لأمانك، سجّل الخروج ثم ادخل مجدداً قبل حذف الحساب.');
+                      } else {
+                        _message(_friendlyError(e));
+                      }
+                    } catch (_) {
+                      _message('تعذر حذف الحساب. تحقق من قواعد Firestore ثم حاول مجدداً.');
+                    } finally {
+                      if (mounted) setState(() => _busy = false);
+                    }
+                  },
+                  icon: const Icon(Icons.delete_forever),
+                  label: const Text('حذف الحساب وبياناتي'),
+                ),
+                const SizedBox(height: 8),
+                const Text('حذف الحساب يزيل ملف المستخدم وطلبات الحجز المحفوظة في SirSir. قد يتطلب Firebase تسجيل الدخول مجدداً للتحقق من الهوية.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey, fontSize: 12)),
               ],
