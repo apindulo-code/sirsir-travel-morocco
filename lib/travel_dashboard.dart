@@ -29,7 +29,16 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
   late final AnimationController ticker;
 
   @override
-  void initState() { super.initState(); ticker = AnimationController(vsync:this,duration:const Duration(seconds:22))..repeat(); WidgetsBinding.instance.addPostFrameCallback((_) => _gps()); }
+  void initState() {
+    super.initState();
+    ticker = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 22),
+    )..repeat();
+    // Do not request native location permissions during app startup.
+    // Load a safe default city first; GPS remains available via the manual button.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadCity(city));
+  }
   @override
   void dispose() { ticker.dispose(); super.dispose(); }
 
