@@ -1430,45 +1430,113 @@ class BookingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bookings = BookingStore.bookings.reversed.toList();
-
+    final signedIn = firebaseReady && FirebaseAuth.instance.currentUser != null;
     return Scaffold(
       appBar: AppBar(title: Text(tr('حجوزاتي'))),
-      body: bookings.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.luggage, size: 60, color: Colors.grey),
-                  SizedBox(height: 12),
-                  Text(tr('لا توجد حجوزات في هذه الجلسة')),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(15),
-              itemCount: bookings.length,
-              itemBuilder: (context, index) {
-                final booking = bookings[index];
-                return Card(
-                  color: Colors.white,
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.confirmation_number,
-                      color: primaryRed,
+      body: signedIn
+          ? StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: FirestoreService().watchMyBookings(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text(
+                        'تعذر تحميل حجوزاتك السحابية. تحقق من نشر قواعد Firestore واتصال الإنترنت.',
+                        textAlign: TextAlign.center,
+                      ),
                     ),
-                    title: Text(
-                      '${booking.trip.origin} ← ${booking.trip.destination}',
-                    ),
-                    subtitle: Text(
-                      '${tr('المرجع: ')}${booking.reference}\n'
-                      '${booking.trip.company} - ${booking.trip.price} DH',
-                    ),
-                    isThreeLine: true,
-                  ),
+                  );
+                }
+                final docs = snapshot.data?.docs ?? [];
+                if (docs.isEmpty) return _emptyBookings();
+                return ListView.builder(
+                  padding: const EdgeInsets.all(15),
+                  itemCount: docs.length,
+                  itemBuilder: (context, index) {
+                    final doc = docs[index];
+                    final data = doc.data();
+                    final date = data['travelDate'] is Timestamp
+                        ? (data['travelDate'] as Timestamp).toDate()
+                        : null;
+                    final status = data['status']?.toString() ?? 'requested';
+                    return Card(
+                      color: Colors.white,
+                      child: ListTile(
+                        leading: const Icon(Icons.confirmation_number, color: primaryRed),
+                        title: Text('\${data['origin'] ?? ''} ← \${data['destination'] ?? ''}'),
+                        subtitle: Text(
+                          'المرجع: \${doc.id}\\n\${data['providerName'] ?? ''} • \${date == null ? 'تاريخ غير محدد' : '\${date.day}/\${date.month}/\${date.year}'}\\nالحالة: \${status == 'cancelled' ? 'ملغى' : 'طلب قيد المعالجة'}',
+                        ),
+                        isThreeLine: true,
+                        trailing: status == 'cancelled'
+                            ? const Icon(Icons.cancel_outlined, color: Colors.grey)
+                            : IconButton(
+                                tooltip: 'إلغاء طلب الحجز',
+                                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                onPressed: () async {
+                                  try {
+                                    await FirestoreService().cancelMyBooking(doc.id);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('تم إلغاء طلب الحجز.')),
+                                      );
+                                    }
+                                  } catch (_) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('تعذر إلغاء الطلب. حاول لاحقاً.')),
+                                      );
+                                    }
+                                  }
+                                },
+                              ),
+                      ),
+                    );
+                  },
                 );
               },
+            )
+          : _guestBookings(),
+    );
+  }
+
+  Widget _emptyBookings() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.luggage, size: 60, color: Colors.grey),
+          const SizedBox(height: 12),
+          Text(tr('لا توجد حجوزات في هذه الجلسة')),
+        ],
+      ),
+    );
+  }
+
+  Widget _guestBookings() {
+    final bookings = BookingStore.bookings.reversed.toList();
+    if (bookings.isEmpty) return _emptyBookings();
+    return ListView.builder(
+      padding: const EdgeInsets.all(15),
+      itemCount: bookings.length,
+      itemBuilder: (context, index) {
+        final booking = bookings[index];
+        return Card(
+          color: Colors.white,
+          child: ListTile(
+            leading: const Icon(Icons.confirmation_number, color: primaryRed),
+            title: Text('\${booking.trip.origin} ← \${booking.trip.destination}'),
+            subtitle: Text(
+              '\${tr('المرجع: ')}\${booking.reference}\\n\${booking.trip.company} - \${booking.trip.price} DH',
             ),
+            isThreeLine: true,
+          ),
+        );
+      },
     );
   }
 }
