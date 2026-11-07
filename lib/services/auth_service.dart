@@ -52,6 +52,7 @@ class AuthService {
     required void Function(FirebaseAuthException error) onVerificationFailed,
     required void Function(String verificationId, int? resendToken) onCodeSent,
     void Function(String verificationId)? onCodeAutoRetrievalTimeout,
+    int? forceResendingToken,
   }) {
     return _auth.verifyPhoneNumber(
       phoneNumber: phoneNumber.trim(),
@@ -60,6 +61,7 @@ class AuthService {
       codeSent: onCodeSent,
       codeAutoRetrievalTimeout: onCodeAutoRetrievalTimeout ?? (_) {},
       timeout: const Duration(seconds: 60),
+      forceResendingToken: forceResendingToken,
     );
   }
 
