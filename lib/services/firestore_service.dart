@@ -68,18 +68,29 @@ class FirestoreService {
       throw StateError('لأمانك، سجّل الخروج ثم ادخل مجدداً قبل حذف الحساب.');
     }
 
-    final bookings = await _db
+    // Remove every top-level record that contains this user's UID before
+    // deleting the Authentication account. Keep batches below Firestore's
+    // 500-write limit to leave room for future cleanup operations.
+    final ownedBookings = await _db
         .collection('bookings')
         .where('userId', isEqualTo: user.uid)
         .get();
+    final ownedReviews = await _db
+        .collection('reviews')
+        .where('userId', isEqualTo: user.uid)
+        .get();
+    final ownedDocuments = <DocumentReference<Map<String, dynamic>>>[
+      ...ownedBookings.docs.map((doc) => doc.reference),
+      ...ownedReviews.docs.map((doc) => doc.reference),
+    ];
 
-    for (var offset = 0; offset < bookings.docs.length; offset += 400) {
+    for (var offset = 0; offset < ownedDocuments.length; offset += 400) {
       final batch = _db.batch();
-      final end = (offset + 400 < bookings.docs.length)
+      final end = (offset + 400 < ownedDocuments.length)
           ? offset + 400
-          : bookings.docs.length;
-      for (final doc in bookings.docs.sublist(offset, end)) {
-        batch.delete(doc.reference);
+          : ownedDocuments.length;
+      for (final reference in ownedDocuments.sublist(offset, end)) {
+        batch.delete(reference);
       }
       await batch.commit();
     }
