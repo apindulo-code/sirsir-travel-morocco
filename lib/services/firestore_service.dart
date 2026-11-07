@@ -62,6 +62,11 @@ class FirestoreService {
   Future<void> deleteCurrentUserDataAndAccount() async {
     final user = _auth.currentUser;
     if (user == null) throw StateError('يجب تسجيل الدخول أولاً.');
+    final lastSignIn = user.metadata.lastSignInTime;
+    if (lastSignIn == null ||
+        DateTime.now().difference(lastSignIn) > const Duration(minutes: 4)) {
+      throw StateError('لأمانك، سجّل الخروج ثم ادخل مجدداً قبل حذف الحساب.');
+    }
 
     final bookings = await _db
         .collection('bookings')
