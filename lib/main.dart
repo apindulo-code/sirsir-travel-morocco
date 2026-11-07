@@ -1,5 +1,4 @@
 import 'dart:ui' as ui;
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -128,7 +127,10 @@ String cityLabel(String city) {
   };
   final values = names[city];
   final index = {'en': 0, 'fr': 1, 'es': 2}[appLanguage.value] ?? -1;
-  return values == null || index < 0 ? ciFuture<void> main() async {
+  return values == null || index < 0 ? city : values[index];
+}
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   FlutterError.onError = (details) {
