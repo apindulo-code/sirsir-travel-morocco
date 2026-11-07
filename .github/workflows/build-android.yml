@@ -22,18 +22,16 @@ jobs:
       - name: Generate Flutter platform files
         run: flutter create --platforms=android,web --project-name=sirsir_travel_morocco .
 
-      - name: Configure Android package ID, location and internet permissions
+      - name: Configure Android package ID, launcher and permissions
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
           package_id = 'ma.sirsirtravel.morocco'
           gradle_files = [Path('android/app/build.gradle.kts'), Path('android/app/build.gradle')]
           gradle = next((p for p in gradle_files if p.exists()), None)
           if gradle is None:
               raise SystemExit('Android app Gradle file not found')
-          source_gradle = gradle.read_text()
-          lines = source_gradle.splitlines()
+          lines = gradle.read_text().splitlines()
           found_namespace = found_application_id = False
           for index, line in enumerate(lines):
               if line.strip().startswith('namespace ='):
@@ -44,53 +42,28 @@ jobs:
                   found_application_id = True
           if not found_namespace or not found_application_id:
               raise SystemExit(f'Could not safely set Android package ID (namespace={found_namespace}, applicationId={found_application_id})')
-          source_gradle = '\n'.join(lines) + '\n'
-          gradle.write_text(source_gradle)
-          PY
-          # Keep the Android launcher class in the same package as the manifest namespace.
-          python - <<'PY'
-          from pathlib import Path
-          import re
-          package_id = 'ma.sirsirtravel.morocco'
+          gradle.write_text('\n'.join(lines) + '\n')
+
+          # Android resolves ".MainActivity" against the Gradle namespace.
+          # Move the generated launcher class into that exact package.
           root = Path('android/app/src/main')
           candidates = list(root.rglob('MainActivity.kt')) + list(root.rglob('MainActivity.java'))
           if len(candidates) != 1:
               raise SystemExit(f'Expected exactly one MainActivity source, found {len(candidates)}')
           source_file = candidates[0]
-          source = source_file.read_text()
-          updated, count = re.subn(r'(?m)^package\\s+[A-Za-z0-9_.]+\\s*
-          source = manifest.read_text()
-          permissions = '    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n'
-          source = source.replace('    <application', permissions + '    <application', 1)
-          manifest.write_text(source)
-          PY
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Build release APK
-        run: flutter build apk --release
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: sirsir-travel-morocco-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-          if-no-files-found: error
-, f'package {package_id}', source, count=1)
-          if count != 1:
-              raise SystemExit(f'Could not update MainActivity package in {source_file}')
-          suffix = source_file.suffix
-          language_dir = 'kotlin' if suffix == '.kt' else 'java'
+          source_lines = source_file.read_text().splitlines()
+          package_indexes = [i for i, line in enumerate(source_lines) if line.strip().startswith('package ')]
+          if len(package_indexes) != 1:
+              raise SystemExit(f'Expected one package declaration in {source_file}')
+          source_lines[package_indexes[0]] = f'package {package_id}'
+          language_dir = 'kotlin' if source_file.suffix == '.kt' else 'java'
           target = Path('android/app/src/main') / language_dir / Path(*package_id.split('.')) / source_file.name
           target.parent.mkdir(parents=True, exist_ok=True)
-          target.write_text(updated)
+          target.write_text('\n'.join(source_lines) + '\n')
           if source_file != target:
               source_file.unlink()
           print(f'MainActivity package aligned: {target}')
-          PY
-          python - <<'PY'
-          from pathlib import Path
+
           manifest = Path('android/app/src/main/AndroidManifest.xml')
           source = manifest.read_text()
           permissions = '    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n'
