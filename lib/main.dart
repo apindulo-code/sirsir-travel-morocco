@@ -1,4 +1,5 @@
 import 'dart:ui' as ui;
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -130,8 +131,6 @@ String cityLabel(String city) {
   return values == null || index < 0 ? ciFuture<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Keep startup failures visible in Android logcat instead of silently
-  // terminating before the first Flutter frame.
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
     debugPrint('SirSir Flutter startup/runtime error: ${details.exceptionAsString()}');
@@ -143,8 +142,6 @@ String cityLabel(String city) {
     return false;
   };
 
-  // Preferences are optional: a plugin/storage failure must not prevent the
-  // public travel dashboard from opening.
   try {
     final preferences = await SharedPreferences.getInstance();
     final savedLanguage = preferences.getString('app_language');
@@ -156,8 +153,6 @@ String cityLabel(String city) {
     debugPrintStack(stackTrace: stack);
   }
 
-  // Firebase is optional for public browsing. Authentication and cloud
-  // bookings are enabled only after successful native initialization.
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     firebaseReady = true;
