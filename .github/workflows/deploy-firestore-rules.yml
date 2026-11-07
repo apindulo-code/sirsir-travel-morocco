@@ -1,13 +1,7 @@
 name: Deploy Firestore Security Rules
 
 on:
-  workflow_run:
-    workflows:
-      - Firestore Security Rules Tests
-    types:
-      - completed
-    branches:
-      - main
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,14 +9,11 @@ permissions:
 
 jobs:
   deploy-firestore-rules:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     name: Deploy tested Firestore rules
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout tested commit
+      - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Authenticate to Google Cloud without service-account keys
         uses: google-github-actions/auth@v3
