@@ -91,7 +91,7 @@ const Map<String, List<String>> appTranslations = {
   'ملعب أدرار': ['Adrar Stadium', 'Stade Adrar', 'Estadio Adrar'],
   'المركب الرياضي بفاس': ['Fez Sports Complex', 'Complexe sportif de Fès', 'Complejo deportivo de Fez'],
   'رادار ملاعب المغرب': ['Morocco Stadium Guide', 'Guide des stades du Maroc', 'Guía de estadios de Marruecos'],
-  'اكتشف الملاعب المغربية\\nوتعرّف على المدن الرياضية': ['Discover Moroccan stadiums\nand sports cities', 'Découvrez les stades marocains\net les villes sportives', 'Descubre los estadios marroquíes\ny las ciudades deportivas'],
+  'اكتشف الملاعب المغربية\nوتعرّف على المدن الرياضية': ['Discover Moroccan stadiums\nand sports cities', 'Découvrez les stades marocains\net les villes sportives', 'Descubre los estadios marroquíes\ny las ciudades deportivas'],
   'السعة: ': ['Capacity: ', 'Capacité : ', 'Capacidad: '],
   'المعلومات تعريفية وتجريبية. لا توجد حالياً بيانات مباشرة عن المباريات أو حالة الملاعب.': ['This is general demo information. Live match or stadium-status data is not currently available.', 'Ces informations sont générales et données à titre de démonstration. Aucune donnée en direct sur les matchs ou l’état des stades n’est disponible.', 'Esta información es orientativa y de demostración. Actualmente no hay datos en directo sobre partidos o el estado de los estadios.'],
   'المباريات والتنبيهات المباشرة ستحتاج إلى ربط مصدر رسمي للمواعيد والنتائج.': ['Live matches and alerts will require an official schedule and results data source.', 'Les matchs et alertes en direct nécessiteront une source officielle pour les calendriers et les résultats.', 'Los partidos y avisos en directo requerirán una fuente oficial de horarios y resultados.'],
@@ -1467,9 +1467,9 @@ class BookingsScreen extends StatelessWidget {
                       color: Colors.white,
                       child: ListTile(
                         leading: const Icon(Icons.confirmation_number, color: primaryRed),
-                        title: Text('\${data['origin'] ?? ''} ← \${data['destination'] ?? ''}'),
+                        title: Text('${data['origin'] ?? ''} ← ${data['destination'] ?? ''}'),
                         subtitle: Text(
-                          'المرجع: \${doc.id}\\n\${data['providerName'] ?? ''} • \${date == null ? 'تاريخ غير محدد' : '\${date.day}/\${date.month}/\${date.year}'}\\nالحالة: \${status == 'cancelled' ? 'ملغى' : 'طلب قيد المعالجة'}',
+                          'المرجع: ${doc.id}\n${data['providerName'] ?? ''} • ${date == null ? 'تاريخ غير محدد' : '${date.day}/${date.month}/${date.year}'}\nالحالة: ${status == 'cancelled' ? 'ملغى' : 'طلب قيد المعالجة'}',
                         ),
                         isThreeLine: true,
                         trailing: status == 'cancelled'
@@ -1529,9 +1529,9 @@ class BookingsScreen extends StatelessWidget {
           color: Colors.white,
           child: ListTile(
             leading: const Icon(Icons.confirmation_number, color: primaryRed),
-            title: Text('\${booking.trip.origin} ← \${booking.trip.destination}'),
+            title: Text('${booking.trip.origin} ← ${booking.trip.destination}'),
             subtitle: Text(
-              '\${tr('المرجع: ')}\${booking.reference}\\n\${booking.trip.company} - \${booking.trip.price} DH',
+              '${tr('المرجع: ')}${booking.reference}\n${booking.trip.company} - ${booking.trip.price} DH',
             ),
             isThreeLine: true,
           ),
