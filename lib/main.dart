@@ -1658,7 +1658,7 @@ class StadiumScreen extends StatelessWidget {
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'اكتشف الملاعب المغربية\nوتعرّف على المدن الرياضية',
+                    'دليل المدن والملاعب المرشحة لكأس العالم 2030\nمعلومات السفر والتنقل حولها',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -1715,7 +1715,7 @@ class StadiumScreen extends StatelessWidget {
           ),
           SizedBox(height: 8),
           Text(
-            'المعلومات تعريفية وتجريبية. لا توجد حالياً بيانات مباشرة عن المباريات أو حالة الملاعب.',
+            'المدن الست مدرجة ضمن المواقع المرشحة في المغرب. الاختيار النهائي للملاعب والمدن لم يُحسم بعد من FIFA. السعات قيد التحقق.',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey, fontSize: 12),
           ),
@@ -1763,7 +1763,7 @@ class StadiumDetailsScreen extends StatelessWidget {
             _detail(Icons.info_outline, tr('معلومات'), tr(stadium.description)),
             SizedBox(height: 20),
             Text(
-              'المباريات والتنبيهات المباشرة ستحتاج إلى ربط مصدر رسمي للمواعيد والنتائج.',
+              'هذه مدينة وملعب مرشحان ضمن عملية التقييم. لا تعتبر هذه الصفحة إعلاناً عن ملعب مستضيف نهائي أو جدول مباريات.',
               style: TextStyle(color: Colors.grey),
             ),
           ],
