@@ -40,3 +40,21 @@ jobs:
           gcloud config set project sirsir-travel-morocco
           gcloud auth print-access-token >/dev/null
           echo "Google Cloud authentication succeeded. No Firebase deployment was performed."
+
+      - name: Inspect Firebase backend resources (read-only)
+        continue-on-error: true
+        shell: bash
+        run: |
+          echo "Checking whether the Firestore API is enabled..."
+          if gcloud services list --enabled --project sirsir-travel-morocco --filter="config.name=firestore.googleapis.com" --format="value(config.name)" | grep -q "firestore.googleapis.com"; then
+            echo "Firestore API is enabled."
+          else
+            echo "Firestore API is disabled or the service account cannot inspect service activation."
+          fi
+
+          echo "Checking the default Firestore database..."
+          if gcloud firestore databases describe --database="(default)" --project sirsir-travel-morocco --format="yaml(name,type,locationId)"; then
+            echo "Default Firestore database is accessible."
+          else
+            echo "Default Firestore database is not available yet, or the service account lacks read permission."
+          fi
