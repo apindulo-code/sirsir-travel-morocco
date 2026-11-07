@@ -45,6 +45,12 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
     WidgetsBinding.instance.addPostFrameCallback((_) { _restoreCity(); _loadNews(); });
   }
   @override
+  void didUpdateWidget(covariant TravelDashboard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.language != widget.language) _loadNews();
+  }
+
+  @override
   void dispose() { ticker.dispose(); super.dispose(); }
 
   Future<void> _gps() async {
