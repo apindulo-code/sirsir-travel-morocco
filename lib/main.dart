@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'screens/auth_screen.dart';
+import 'screens/route_planner_screen.dart';
 import 'services/firestore_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -586,6 +587,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 label: Text(tr('خريطة المغرب')),
                 style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
                 onPressed: _openMoroccoMap,
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.alt_route),
+                label: const Text('مخطط الطريق بين المدن'),
+                style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const RoutePlannerScreen()),
+                ),
               ),
             ),
             SizedBox(height: 18),
