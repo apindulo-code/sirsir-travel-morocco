@@ -59,8 +59,18 @@ jobs:
             echo "Default Firestore database is not available yet, or the service account lacks read permission."
           fi
 
-      - name: Enable Firebase APIs if authorized (no database creation)
+      - name: Verify Firebase APIs and Firestore database (read-only)
         continue-on-error: true
         shell: bash
         run: |
-          gcloud services enable firestore.googleapis.com identitytoolkit.googleapis.com --project=sirsir-travel-morocco
+          set +e
+          for api in firestore.googleapis.com identitytoolkit.googleapis.com; do
+            if gcloud services list --enabled --project=sirsir-travel-morocco --filter="config.name=$api" --format="value(config.name)" | grep -q "$api"; then
+              echo "$api: ENABLED"
+            else
+              echo "$api: NOT ENABLED or not visible to this service account"
+            fi
+          done
+
+          echo "Checking default Firestore database..."
+          gcloud firestore databases describe --database="(default)" --project=sirsir-travel-morocco --format="yaml(name,type,locationId)"
