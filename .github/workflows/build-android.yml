@@ -47,6 +47,48 @@ jobs:
           source_gradle = '\n'.join(lines) + '\n'
           gradle.write_text(source_gradle)
           PY
+          # Keep the Android launcher class in the same package as the manifest namespace.
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          package_id = 'ma.sirsirtravel.morocco'
+          root = Path('android/app/src/main')
+          candidates = list(root.rglob('MainActivity.kt')) + list(root.rglob('MainActivity.java'))
+          if len(candidates) != 1:
+              raise SystemExit(f'Expected exactly one MainActivity source, found {len(candidates)}')
+          source_file = candidates[0]
+          source = source_file.read_text()
+          updated, count = re.subn(r'(?m)^package\\s+[A-Za-z0-9_.]+\\s*
+          source = manifest.read_text()
+          permissions = '    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n'
+          source = source.replace('    <application', permissions + '    <application', 1)
+          manifest.write_text(source)
+          PY
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: sirsir-travel-morocco-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+, f'package {package_id}', source, count=1)
+          if count != 1:
+              raise SystemExit(f'Could not update MainActivity package in {source_file}')
+          suffix = source_file.suffix
+          language_dir = 'kotlin' if suffix == '.kt' else 'java'
+          target = Path('android/app/src/main') / language_dir / Path(*package_id.split('.')) / source_file.name
+          target.parent.mkdir(parents=True, exist_ok=True)
+          target.write_text(updated)
+          if source_file != target:
+              source_file.unlink()
+          print(f'MainActivity package aligned: {target}')
+          PY
           python - <<'PY'
           from pathlib import Path
           manifest = Path('android/app/src/main/AndroidManifest.xml')
