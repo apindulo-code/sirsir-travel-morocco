@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'firebase_options.dart';
+import 'screens/auth_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -7,6 +11,13 @@ import 'travel_dashboard.dart';
 
 // Supported interface languages: Arabic, English, French and Spanish.
 final ValueNotifier<String> appLanguage = ValueNotifier<String>('ar');
+bool firebaseReady = false;
+
+Future<void> changeAppLanguage(String language) async {
+  appLanguage.value = language;
+  final preferences = await SharedPreferences.getInstance();
+  await preferences.setString('app_language', language);
+}
 const Map<String, List<String>> appTranslations = {
   'سير سير 🇲🇦': ['SirSir 🇲🇦', 'SirSir 🇲🇦', 'SirSir 🇲🇦'],
   'حجوزاتي': ['My bookings', 'Mes réservations', 'Mis reservas'],
@@ -114,10 +125,22 @@ String cityLabel(String city) {
 }
 
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Keep the travel app launch independent from Firebase availability.
-  // Firebase services can be initialized later when the backend is configured.
+  final preferences = await SharedPreferences.getInstance();
+  final savedLanguage = preferences.getString('app_language');
+  if (savedLanguage != null && ['ar', 'en', 'fr', 'es'].contains(savedLanguage)) {
+    appLanguage.value = savedLanguage;
+  }
+  // Firebase is initialized when valid project options are available, but a
+  // backend outage must never prevent the public travel dashboard from opening.
+  try {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    firebaseReady = true;
+  } catch (error) {
+    debugPrint('Firebase initialization unavailable: $error');
+    firebaseReady = false;
+  }
   runApp(const SirSirApp());
 }
 
@@ -324,7 +347,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           PopupMenuButton<String>(
             tooltip: tr('اللغة'),
-            onSelected: (value) => appLanguage.value = value,
+            onSelected: (value) => changeAppLanguage(value),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Row(
@@ -354,6 +377,18 @@ class _HomeScreenState extends State<HomeScreen> {
               context,
               MaterialPageRoute(
                 builder: (_) => const BookingsScreen(),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: Icon(firebaseReady ? Icons.account_circle_outlined : Icons.cloud_off_outlined),
+            tooltip: 'حساب SirSir',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => firebaseReady
+                    ? const AuthScreen()
+                    : const FirebaseUnavailableScreen(),
               ),
             ),
           ),
@@ -1605,6 +1640,28 @@ class StadiumDetailsScreen extends StatelessWidget {
             child: Text('$title: $value'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+
+class FirebaseUnavailableScreen extends StatelessWidget {
+  const FirebaseUnavailableScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('حساب SirSir')),
+      body: const Padding(
+        padding: EdgeInsets.all(24),
+        child: Center(
+          child: Text(
+            'خدمة الحسابات غير متاحة حالياً. يمكنك استخدام معلومات السفر والخرائط كضيف. يرجى التحقق من إعدادات Firebase واتصال الإنترنت.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, height: 1.6),
+          ),
+        ),
       ),
     );
   }
