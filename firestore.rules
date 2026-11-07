@@ -10,6 +10,23 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
+    function validLanguage(value) {
+      return value in ['ar', 'en', 'fr', 'es'];
+    }
+
+    function validUserProfile(data, uid) {
+      return data.keys().hasOnly([
+          'uid', 'displayName', 'email', 'phoneNumber',
+          'preferredLanguage', 'createdAt', 'updatedAt'
+        ])
+        && data.uid == uid
+        && data.displayName is string
+        && data.displayName.size() <= 100
+        && (data.email == null || data.email is string)
+        && (data.phoneNumber == null || data.phoneNumber is string)
+        && validLanguage(data.preferredLanguage);
+    }
+
     match /destinations/{document=**} {
       allow read: if true;
       allow write: if false;
@@ -28,16 +45,21 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if owns(uid);
       allow create: if owns(uid)
-        && request.resource.data.keys().hasOnly([
+        && validUserProfile(request.resource.data, uid)
+        && request.resource.data.keys().hasAll([
           'uid', 'displayName', 'email', 'phoneNumber',
           'preferredLanguage', 'createdAt', 'updatedAt'
-        ])
-        && request.resource.data.uid == uid;
+        ]);
       allow update: if owns(uid)
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'displayName', 'phoneNumber', 'preferredLanguage', 'updatedAt'
-        ]);
+        ])
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 100
+        && (request.resource.data.phoneNumber == null
+          || request.resource.data.phoneNumber is string)
+        && validLanguage(request.resource.data.preferredLanguage);
       allow delete: if owns(uid);
 
       match /{subcollection}/{document=**} {
@@ -52,40 +74,68 @@ service cloud.firestore {
           'passengerName', 'passengerPhone', 'providerName',
           'displayedPrice', 'currency', 'status', 'createdAt'
         ])
+        && request.resource.data.keys().hasAll([
+          'userId', 'origin', 'destination', 'travelDate',
+          'passengerName', 'passengerPhone', 'providerName',
+          'displayedPrice', 'currency', 'status', 'createdAt'
+        ])
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.origin is string
+        && request.resource.data.origin.size() > 0
+        && request.resource.data.origin.size() <= 100
         && request.resource.data.destination is string
+        && request.resource.data.destination.size() > 0
+        && request.resource.data.destination.size() <= 100
+        && request.resource.data.travelDate is timestamp
         && request.resource.data.passengerName is string
+        && request.resource.data.passengerName.size() > 0
+        && request.resource.data.passengerName.size() <= 100
         && request.resource.data.passengerPhone is string
+        && request.resource.data.passengerPhone.size() >= 6
+        && request.resource.data.passengerPhone.size() <= 24
         && request.resource.data.providerName is string
+        && request.resource.data.providerName.size() > 0
+        && request.resource.data.providerName.size() <= 100
         && request.resource.data.displayedPrice is number
-        && request.resource.data.status == 'requested';
-      allow read, delete: if signedIn()
-        && resource.data.userId == request.auth.uid;
-      // A client can only cancel its own request; it cannot rewrite trip,
-      // passenger, provider, price, or ownership fields.
-      allow update: if signedIn()
-        && resource.data.userId == request.auth.uid
+        && request.resource.data.displayedPrice >= 0
+        && request.resource.data.currency == 'MAD'
+        && request.resource.data.status == 'requested'
+        && request.resource.data.createdAt is timestamp;
+      allow read, delete: if owns(resource.data.userId);
+      allow update: if owns(resource.data.userId)
         && request.resource.data.userId == resource.data.userId
         && request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['status', 'updatedAt'])
-        && request.resource.data.status == 'cancelled';
+        && request.resource.data.status == 'cancelled'
+        && request.resource.data.updatedAt is timestamp;
     }
 
     match /reviews/{reviewId} {
-      allow read: if true;
+      // Reviews contain a Firebase UID; keep them private to their author.
+      allow read: if owns(resource.data.userId);
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly([
           'userId', 'subjectId', 'subjectType', 'rating',
           'comment', 'createdAt'
         ])
+        && request.resource.data.keys().hasAll([
+          'userId', 'subjectId', 'subjectType', 'rating',
+          'comment', 'createdAt'
+        ])
         && request.resource.data.userId == request.auth.uid
+        && request.resource.data.subjectId is string
+        && request.resource.data.subjectId.size() > 0
+        && request.resource.data.subjectId.size() <= 128
+        && request.resource.data.subjectType in [
+          'destination', 'transport_provider', 'trip'
+        ]
         && request.resource.data.rating is int
         && request.resource.data.rating >= 1
         && request.resource.data.rating <= 5
-        && request.resource.data.comment is string;
-      allow update: if signedIn()
-        && resource.data.userId == request.auth.uid
+        && request.resource.data.comment is string
+        && request.resource.data.comment.size() <= 1000
+        && request.resource.data.createdAt is timestamp;
+      allow update: if owns(resource.data.userId)
         && request.resource.data.userId == resource.data.userId
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'rating', 'comment'
@@ -93,9 +143,9 @@ service cloud.firestore {
         && request.resource.data.rating is int
         && request.resource.data.rating >= 1
         && request.resource.data.rating <= 5
-        && request.resource.data.comment is string;
-      allow delete: if signedIn()
-        && resource.data.userId == request.auth.uid;
+        && request.resource.data.comment is string
+        && request.resource.data.comment.size() <= 1000;
+      allow delete: if owns(resource.data.userId);
     }
 
     match /{document=**} {
