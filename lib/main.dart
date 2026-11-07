@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'travel_dashboard.dart';
 
 // Supported interface languages: Arabic, English, French and Spanish.
 final ValueNotifier<String> appLanguage = ValueNotifier<String>('ar');
@@ -402,6 +403,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
+            const TravelDashboard(),
             SizedBox(height: 22),
             Text(
               tr('ابحث عن رحلتك'),
