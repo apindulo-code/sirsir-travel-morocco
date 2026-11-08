@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b5b4b">
+  <meta name="description" content="المعلومات القانونية وسياسة الخصوصية لتطبيق SirSir Travel Morocco.">
+  <title>{{ page.title | default: "SirSir Travel Morocco" | escape }}</title>
+  <style>
+    :root{color-scheme:light;--ink:#172b27;--muted:#5d716b;--brand:#0b5b4b;--line:#dce7e2;--paper:#fff;--bg:#f3f7f5}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;line-height:1.9}
+    header{background:var(--brand);color:#fff;padding:26px 18px}header .wrap,main,.foot{max-width:900px;margin:auto}
+    header a{color:#fff;text-decoration:none;font-weight:700}header p{margin:6px 0 0;opacity:.9}
+    main{background:var(--paper);margin:26px auto;padding:clamp(20px,5vw,46px);border:1px solid var(--line);border-radius:18px}
+    h1,h2,h3{line-height:1.5;color:var(--brand)}h1{font-size:clamp(1.6rem,4vw,2.2rem)}a{color:#075f9c;overflow-wrap:anywhere}
+    .nav{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}.nav a{color:#fff;border:1px solid #ffffff66;border-radius:999px;padding:4px 12px;text-decoration:none;font-size:.92rem}
+    .notice{background:#fff8e8;border-right:4px solid #c58b22;padding:12px 16px;border-radius:8px}
+    .foot{padding:0 18px 28px;color:var(--muted);font-size:.92rem}.contact{background:#edf6f2;padding:14px 18px;border-radius:12px}
+    table{border-collapse:collapse;max-width:100%;display:block;overflow-x:auto}td,th{border:1px solid var(--line);padding:8px}
+    code{direction:ltr;unicode-bidi:embed}
+  </style>
+</head>
+<body>
+  <header><div class="wrap">
+    <a href="{{ '/' | relative_url }}">SirSir Travel Morocco 🇲🇦</a>
+    <p>المعلومات القانونية وحقوق المستخدمين</p>
+    <nav class="nav" aria-label="روابط قانونية">
+      <a href="{{ '/privacy-policy/' | relative_url }}">سياسة الخصوصية</a>
+      <a href="{{ '/terms/' | relative_url }}">شروط الاستخدام</a>
+      <a href="{{ '/delete-account/' | relative_url }}">حذف الحساب</a>
+    </nav>
+  </div></header>
+  <main>{{ content }}</main>
+  <footer class="foot">للتواصل: <a href="mailto:apindulo@gmail.com">apindulo@gmail.com</a> · SirSir Travel Morocco</footer>
+</body>
+</html>
