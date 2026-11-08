@@ -51,7 +51,7 @@
 
 ## أتمتة النشر من GitHub
 
-ملف `.github/workflows/firebase-deploy-rules.yml` يستخدم الآن Workload Identity Federation، ولا يحتاج إلى Service Account JSON أو GitHub Secret. يعمل يدوياً فقط (workflow_dispatch) وينشر Firestore Rules فقط إلى مشروع `sirsir-travel-morocco`.
+ملف `.github/workflows/firebase-deploy-rules.yml` يستخدم الآن Workload Identity Federation، ولا يحتاج إلى Service Account JSON أو GitHub Secret. يبدأ تلقائياً عند كل push إلى الفرع `main`، ويمكن أيضاً تشغيله يدوياً عبر `workflow_dispatch`. ينشر Firestore Rules فقط إلى مشروع `sirsir-travel-morocco`.
 
 إعداد المصادقة في Workflow:
 
