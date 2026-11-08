@@ -111,7 +111,7 @@ jobs:
                   android_marker = 'android {'
                   if android_marker not in source:
                       raise SystemExit('Android Gradle Kotlin DSL android block not found')
-                  imports = "import java.util.Properties\\nimport java.io.FileInputStream\\n\\n"
+                  imports = "import java.util.Properties\nimport java.io.FileInputStream\n\n"
                   if "import java.util.Properties" not in source:
                       source = imports + source
                   properties = """    val keystoreProperties = Properties()
