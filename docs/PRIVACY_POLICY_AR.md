@@ -1,3 +1,9 @@
+---
+layout: default
+title: "سياسة الخصوصية"
+permalink: /privacy-policy/
+---
+
 # سياسة الخصوصية — SirSir Travel Morocco
 
 **تاريخ المراجعة:** 8 نوفمبر 2026  
