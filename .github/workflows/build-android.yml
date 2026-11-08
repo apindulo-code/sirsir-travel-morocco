@@ -76,6 +76,118 @@ jobs:
           manifest.write_text(source)
           PY
 
+      - name: Configure Android upload signing (only when secrets are configured)
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ] || [ -z "$ANDROID_KEY_ALIAS" ] || [ -z "$ANDROID_STORE_PASSWORD" ] || [ -z "$ANDROID_KEY_PASSWORD" ]; then
+            echo "ANDROID_SIGNING_CONFIGURED=false" >> "$GITHUB_ENV"
+            echo "::notice::Android signing secrets are not configured. APK/web checks will run; signed AAB will be skipped."
+            exit 0
+          fi
+
+          mkdir -p android/app
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          test -s android/app/upload-keystore.jks
+          cat > android/key.properties <<EOF
+          storePassword=$ANDROID_STORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=app/upload-keystore.jks
+          EOF
+          chmod 600 android/key.properties android/app/upload-keystore.jks
+
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          gradle = Path('android/app/build.gradle.kts')
+          if gradle.exists():
+              source = gradle.read_text()
+              if 'signingConfigs {' not in source:
+                  android_marker = 'android {'
+                  if android_marker not in source:
+                      raise SystemExit('Android Gradle Kotlin DSL android block not found')
+                  properties = """    val keystoreProperties = java.util.Properties()
+              val keystorePropertiesFile = rootProject.file("key.properties")
+              if (keystorePropertiesFile.exists()) {
+                  keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
+              }
+
+          """
+                  source = source.replace(android_marker, android_marker + '\n' + properties, 1)
+                  signing = """    signingConfigs {
+                  create("release") {
+                      keyAlias = keystoreProperties["keyAlias"] as String
+                      keyPassword = keystoreProperties["keyPassword"] as String
+                      storeFile = keystoreProperties["storeFile"]?.let { file(it as String) }
+                      storePassword = keystoreProperties["storePassword"] as String
+                  }
+              }
+
+          """
+                  source = source.replace('    buildTypes {', signing + '    buildTypes {', 1)
+                  match = re.search(r'buildTypes\s*\{', source)
+                  if not match:
+                      raise SystemExit('Android buildTypes block not found')
+                  before, tail = source[:match.end()], source[match.end():]
+                  tail, count = re.subn(
+                      r'signingConfig\s*=\s*signingConfigs\.getByName\("debug"\)',
+                      'signingConfig = signingConfigs.getByName("release")',
+                      tail,
+                      count=1,
+                  )
+                  if count != 1:
+                      raise SystemExit('Could not safely replace generated debug release signing config')
+                  source = before + tail
+              gradle.write_text(source)
+          else:
+              gradle = Path('android/app/build.gradle')
+              if not gradle.exists():
+                  raise SystemExit('Android app Gradle file not found')
+              source = gradle.read_text()
+              if 'signingConfigs {' not in source:
+                  properties = """    def keystoreProperties = new Properties()
+              def keystorePropertiesFile = rootProject.file('key.properties')
+              if (keystorePropertiesFile.exists()) {
+                  keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+              }
+
+          """
+                  source = source.replace('android {', 'android {\n' + properties, 1)
+                  signing = """    signingConfigs {
+                  release {
+                      keyAlias keystoreProperties['keyAlias']
+                      keyPassword keystoreProperties['keyPassword']
+                      storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+                      storePassword keystoreProperties['storePassword']
+                  }
+              }
+
+          """
+                  source = source.replace('    buildTypes {', signing + '    buildTypes {', 1)
+                  match = re.search(r'buildTypes\s*\{', source)
+                  if not match:
+                      raise SystemExit('Android buildTypes block not found')
+                  before, tail = source[:match.end()], source[match.end():]
+                  tail, count = re.subn(
+                      r'signingConfig\s*(?:=\s*)?signingConfigs\.debug',
+                      'signingConfig signingConfigs.release',
+                      tail,
+                      count=1,
+                  )
+                  if count != 1:
+                      raise SystemExit('Could not safely replace generated debug release signing config')
+                  source = before + tail
+              gradle.write_text(source)
+          print('Android release signing configured without printing secret values.')
+          PY
+
+          echo "ANDROID_SIGNING_CONFIGURED=true" >> "$GITHUB_ENV"
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -95,6 +207,20 @@ jobs:
           name: sirsir-travel-morocco-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
+
+      - name: Build signed Android App Bundle for Google Play
+        if: env.ANDROID_SIGNING_CONFIGURED == 'true'
+        timeout-minutes: 25
+        run: flutter build appbundle --release
+
+      - name: Upload signed Android App Bundle
+        if: env.ANDROID_SIGNING_CONFIGURED == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sirsir-travel-morocco-google-play-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Build responsive web app
         run: flutter build web --release
