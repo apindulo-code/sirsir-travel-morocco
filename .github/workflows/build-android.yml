@@ -71,9 +71,27 @@ jobs:
 
           manifest = Path('android/app/src/main/AndroidManifest.xml')
           source = manifest.read_text()
-          permissions = '    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n'
+          # Give Android the public product name instead of the internal Flutter project slug.
+          import re
+          source, label_count = re.subn(
+              r'(<application\\b[^>]*\\bandroid:label=")[^"]*(")',
+              r'\\1SirSir Travel Morocco\\2',
+              source,
+              count=1,
+          )
+          if label_count == 0:
+              source, label_count = re.subn(
+                  r'<application\\b',
+                  '<application android:label="SirSir Travel Morocco"',
+                  source,
+                  count=1,
+              )
+          if label_count != 1:
+              raise SystemExit('Could not safely set Android application label')
+          permissions = '    <uses-permission android:name="android.permission.INTERNET" />\\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\\n'
           source = source.replace('    <application', permissions + '    <application', 1)
           manifest.write_text(source)
+          print('Android app label set to SirSir Travel Morocco')
           PY
 
       - name: Configure Android upload signing (only when secrets are configured)
