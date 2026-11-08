@@ -1,3 +1,9 @@
+---
+layout: default
+title: "طلب حذف الحساب والبيانات"
+permalink: /delete-account/
+---
+
 # طلب حذف الحساب والبيانات — SirSir Travel Morocco
 
 **مسؤول التطبيق:** Abdelwahed Aknin (بصفته الشخصية)  
