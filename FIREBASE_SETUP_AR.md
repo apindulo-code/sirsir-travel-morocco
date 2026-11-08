@@ -3,35 +3,44 @@
 ## الإعدادات المسجلة
 
 - مشروع Firebase: `sirsir-travel-morocco`.
+- رقم المشروع: `881046533648`.
 - تطبيق Android: `ma.sirsirtravel.morocco`.
 - تطبيق Web: `SirSir Travel Morocco Web`.
-- إعدادات Android وWeb موجودة في `lib/firebase_options.dart` ويختار التطبيق الإعداد المناسب تلقائياً.
+- إعدادات Android وWeb موجودة في `lib/firebase_options.dart` ويختار التطبيق إعداد المنصة تلقائياً.
 - Cloud Firestore: قاعدة `(default)` في `europe-west1`، وضع الإنتاج.
-- Authentication: يذكر إعداد المشروع تفعيل Email/Password وPhone؛ يجب إعادة التحقق من حالة المزوّدين في Firebase Console واختبار البريد وSMS فعلياً قبل الإطلاق.
+- Authentication: تم تفعيل Email/Password وPhone وفق الإعدادات التي راجعها مالك المشروع؛ يجب إعادة التحقق واختبار SMS حقيقي قبل الإطلاق.
 
 ## ما هو جاهز في المستودع
 
 - Firebase Core وAuthentication وCloud Firestore في تطبيق Flutter.
-- تسجيل الدخول والتسجيل بالبريد، التحقق من البريد، إعادة تعيين كلمة المرور، والتحقق الهاتفي عبر SMS.
-- خدمة ملفات المستخدمين وطلبات الحجز والتقييمات.
+- التسجيل والدخول بالبريد، التحقق من البريد، إعادة تعيين كلمة المرور، والتحقق الهاتفي عبر SMS.
+- خدمات ملفات المستخدمين وطلبات السفر والتقييمات.
 - قواعد Firestore في `firestore.rules` وملف إعداد Firebase CLI.
-- اختبارات قواعد الأمان تعمل عبر Firestore Emulator في GitHub Actions.
+- اختبارات قواعد الأمان عبر Firestore Emulator في GitHub Actions.
+- نشر سابق موثق لقواعد Firestore في الإنتاج (run `42424468166`) ونجاح اختبارات المحاكي (run `42438516026`).
 
 ## ما تبقى قبل الإطلاق
 
-1. **قواعد Firestore في الإنتاج:** تم التحقق من نشر `firestore.rules` بنجاح إلى مشروع `sirsir-travel-morocco` في تشغيل GitHub Actions رقم `42424468166`، كما نجحت اختبارات قواعد الأمان عبر Firestore Emulator في التشغيل `42438516026`. أعد الاختبارات بعد كل تغيير للقواعد، ولا تفتح القراءة أو الكتابة العامة.
-2. **التحقق من فهرسة الاستعلامات:** ملف `firestore.indexes.json` لا يحتوي حالياً على فهارس مركبة؛ أضف فقط ما تطلبه أخطاء الاستعلامات الفعلية.
-3. **اختبار الحسابات:** أنشئ حساب اختبار بالبريد، اختبر التحقق وإعادة تعيين كلمة المرور، ثم اختبر الهاتف برقم تملكه. قد يتطلب الهاتف بصمات SHA-1 وSHA-256 وتحديد البلدان المسموح بها وحدود SMS.
-4. **اختبار الويب:** جرّب التسجيل والدخول في المتصفح بعد اكتمال بناء الويب، وتأكد من أن نطاق الموقع مسموح به في Authentication > Settings > Authorized domains.
-5. **اختبار الحجز:** تحقق من أن الطلب يُحفظ ويظهر لصاحبه فقط، وأن الإلغاء يعمل. الطلب داخل التطبيق ليس تذكرة مؤكدة لدى شركة النقل.
-6. **الخصوصية والإطلاق:** راجع سياسة الخصوصية وشروط الاستخدام وبيانات التواصل والدعم قبل النشر العام.
+1. **التحقق من WIF:** تأكد في Google Cloud من أن شرط Provider CEL محفوظ حرفياً كما يلي:
+   ```cel
+   assertion.repository == "apindulo-code/sirsir-travel-morocco" && assertion.ref == "refs/heads/main"
+   ```
+   يجب استخدام `==` في المقارنتين. Provider ID هو `github`، وPool ID هو `sirsir-github`.
+2. **اختبار نشر القواعد:** شغّل يدوياً GitHub Actions > Deploy Firebase Firestore Rules، وتحقق من نجاح كل الخطوات قبل اعتبار الربط مكتملاً.
+3. **فهرسة الاستعلامات:** `firestore.indexes.json` لا يحتوي حالياً على فهارس مركبة؛ أضف فقط ما تطلبه أخطاء الاستعلامات الفعلية.
+4. **اختبار الحسابات:** اختبر البريد والتحقق وإعادة تعيين كلمة المرور. اختبر SMS حقيقياً برقم تملكه؛ أرقام الاختبار لا تثبت وصول الرسائل الحقيقية.
+5. **الفوترة وSMS:** لا تفعّل خطة مدفوعة أو فوترة قبل مراجعة الأسعار والموافقة الصريحة. قد لا يعمل SMS الحقيقي في الخطة الحالية.
+6. **اختبار الويب:** تحقق من النطاقات المسموح بها في Authentication > Settings > Authorized domains.
+7. **اختبار الحجز:** تحقق من حفظ الطلب وظهوره لصاحبه فقط وإمكانية إلغائه. الطلب داخل التطبيق ليس تذكرة مؤكدة لدى شركة النقل.
+8. **الخصوصية والإطلاق:** راجع سياسة الخصوصية وشروط الاستخدام وبيانات التواصل والدعم مع مختص قبل النشر العام.
 
 ## الأمان
 
 - لا تضع كلمات مرور أو مفاتيح Service Account أو ملفات JSON الخاصة بالخادم في GitHub.
-- إعدادات Firebase الخاصة بتطبيق العميل ليست بديلاً عن قواعد Firestore.
+- إعدادات Firebase الخاصة بتطبيق العميل ليست أسرار خادم؛ حماية البيانات تعتمد على قواعد Firestore وصحة إعدادات Authentication.
 - لا تفعّل فوترة أو خطة مدفوعة أو خدمات SMS برسوم دون مراجعة التكلفة والموافقة.
 - محتوى الوجهات والأخبار ومزودي النقل للقراءة العامة فقط من التطبيق؛ يجب أن تأتي الكتابة من قناة إدارية موثوقة.
+- حساب الخدمة المخصص للنشر: `sirsir-github-deploy@sirsir-travel-morocco.iam.gserviceaccount.com`. الدور المطلوب لنشر القواعد: Firebase Rules Admin، مع Workload Identity User على حساب الخدمة.
 
 ## حدود المنتج الحالية
 
@@ -40,20 +49,19 @@
 - بيانات الطقس والبحر تقديرية وليست تحذيراً رسمياً أو ضماناً للسلامة.
 - معلومات ملاعب 2030 يجب تحديثها وفق الإعلانات الرسمية.
 
-
 ## أتمتة النشر من GitHub
 
-أُضيف سير عمل يدوي في `.github/workflows/firebase-deploy-rules.yml` لنشر قواعد Firestore فقط إلى مشروع `sirsir-travel-morocco`. لا يعمل تلقائياً مع كل Push؛ يجب تشغيله يدوياً من GitHub Actions بعد إعداد بيانات الاعتماد.
+ملف `.github/workflows/firebase-deploy-rules.yml` يستخدم الآن Workload Identity Federation، ولا يحتاج إلى Service Account JSON أو GitHub Secret. يعمل يدوياً فقط (workflow_dispatch) وينشر Firestore Rules فقط إلى مشروع `sirsir-travel-morocco`.
 
-### إعداد مطلوب مرة واحدة من مالك المشروع
+إعداد المصادقة في Workflow:
 
-1. في Google Cloud Console افتح IAM & Admin > Service Accounts وأنشئ حساب خدمة مخصصاً للنشر.
-2. امنحه أقل صلاحية تسمح بنشر Firebase Security Rules، وراجع الصلاحيات المطلوبة في صفحة Firebase Rules قبل اعتمادها.
-3. أنشئ مفتاح JSON للحساب واحفظه محلياً بأمان. لا ترفعه إلى المستودع ولا ترسله في المحادثة.
-4. في GitHub افتح Settings > Secrets and variables > Actions > New repository secret.
-5. أنشئ السر بالاسم `FIREBASE_SERVICE_ACCOUNT_SIRSIR_TRAVEL_MOROCCO` والصق محتوى JSON كاملاً.
-6. افتح Actions > Deploy Firebase Firestore Rules > Run workflow.
+- Pool: `sirsir-github`
+- Provider: `github`
+- Provider resource: `projects/881046533648/locations/global/workloadIdentityPools/sirsir-github/providers/github`
+- Service account: `sirsir-github-deploy@sirsir-travel-morocco.iam.gserviceaccount.com`
+- GitHub repository condition: `apindulo-code/sirsir-travel-morocco`
+- Branch condition: `refs/heads/main`
 
-إذا لم يكن السر موجوداً، يتوقف سير العمل برسالة واضحة ولا ينفذ أي نشر. هذا الإعداد لا يفعّل الفوترة ولا يرسل SMS ولا ينشر Hosting أو Storage.
+رابط التشغيل: https://github.com/apindulo-code/sirsir-travel-morocco/actions/workflows/firebase-deploy-rules.yml
 
-**ملاحظة:** تم توثيق نشر سابق لقواعد Firestore واختبارها بالمحاكي؛ هذا المسار يضيف آلية نشر يدوية قابلة للتكرار. بعد أي تعديل للقواعد يجب تشغيل اختبارات المحاكي قبل النشر.
+هذا الـWorkflow لا ينشر Hosting أو Storage، ولا يفعّل الفوترة، ولا يرسل SMS. لا تعتبر عملية النشر مكتملة حتى يظهر تشغيل أخضر ناجح في GitHub Actions.
