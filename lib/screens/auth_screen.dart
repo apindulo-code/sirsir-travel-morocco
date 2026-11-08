@@ -65,14 +65,20 @@ class _AuthScreenState extends State<AuthScreen> {
               displayName: _name.text.trim(),
               preferredLanguage: 'ar',
             );
-          } catch (_) {}
+          } catch (_) {
+            _message('تم إنشاء الحساب، لكن تعذر حفظ ملفك الشخصي. أعد تسجيل الدخول لاحقاً أو تواصل مع الدعم.');
+            return;
+          }
         }
         _message('تم إنشاء الحساب. تحقق من بريدك الإلكتروني لتأكيده.');
       } else {
         await auth.signInWithEmail(email: _email.text, password: _password.text);
         try {
           await FirestoreService().saveCurrentUserProfile();
-        } catch (_) {}
+        } catch (_) {
+          _message('تم تسجيل الدخول، لكن تعذر تحديث ملفك الشخصي. يمكنك متابعة الاستخدام والمحاولة لاحقاً.');
+          return;
+        }
         _message('مرحباً بعودتك.');
       }
     } on FirebaseAuthException catch (e) {
@@ -97,6 +103,7 @@ class _AuthScreenState extends State<AuthScreen> {
         onVerificationCompleted: (credential) async {
           try {
             await AuthService().signInWithPhoneCredential(credential);
+            await FirestoreService().saveCurrentUserProfile();
             if (mounted) _message('تم التحقق من رقم الهاتف وتسجيل الدخول.');
           } catch (_) {
             if (mounted) _message('تعذر إكمال تسجيل الدخول بهذا الرقم.');
@@ -140,7 +147,10 @@ class _AuthScreenState extends State<AuthScreen> {
       );
       try {
         await FirestoreService().saveCurrentUserProfile();
-      } catch (_) {}
+      } catch (_) {
+        _message('تم تسجيل الدخول، لكن تعذر تحديث ملفك الشخصي. يمكنك متابعة الاستخدام والمحاولة لاحقاً.');
+        return;
+      }
       _message('تم تسجيل الدخول بنجاح.');
     } on FirebaseAuthException catch (e) {
       _message(_friendlyError(e));
@@ -209,7 +219,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       context: context,
                       builder: (dialogContext) => AlertDialog(
                         title: const Text('حذف الحساب نهائياً؟'),
-                        content: const Text('سيتم حذف ملفك الشخصي وطلبات الحجز المرتبطة بحسابك. لا يمكن التراجع عن هذه العملية.'),
+                        content: const Text('سيتم حذف ملفك الشخصي وطلبات السفر والتقييمات المرتبطة بحسابك. لا يمكن التراجع عن هذه العملية.'),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(dialogContext, false),
@@ -227,7 +237,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     setState(() => _busy = true);
                     try {
                       await FirestoreService().deleteCurrentUserDataAndAccount();
-                      _message('تم حذف الحساب وبيانات الحجوزات المرتبطة به.');
+                      _message('تم حذف الحساب والملف الشخصي وطلبات السفر والتقييمات المرتبطة به.');
                     } on FirebaseAuthException catch (e) {
                       if (e.code == 'requires-recent-login') {
                         _message('لأمانك، سجّل الخروج ثم ادخل مجدداً قبل حذف الحساب.');
@@ -246,7 +256,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   label: const Text('حذف الحساب وبياناتي'),
                 ),
                 const SizedBox(height: 8),
-                const Text('حذف الحساب يزيل ملف المستخدم وطلبات الحجز المحفوظة في SirSir. قد يتطلب Firebase تسجيل الدخول مجدداً للتحقق من الهوية.',
+                const Text('حذف الحساب يزيل ملف المستخدم وطلبات السفر والتقييمات المحفوظة في SirSir. قد يتطلب Firebase تسجيل الدخول مجدداً للتحقق من الهوية.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey, fontSize: 12)),
               ],
