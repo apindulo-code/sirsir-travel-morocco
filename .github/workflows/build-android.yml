@@ -100,6 +100,10 @@ jobs:
           EOF
           chmod 600 android/key.properties android/app/upload-keystore.jks
 
+          echo "Public upload-certificate fingerprints (safe to add in Firebase):"
+          keytool -exportcert -keystore android/app/upload-keystore.jks -alias "$ANDROID_KEY_ALIAS" -storepass "$ANDROID_STORE_PASSWORD" | openssl dgst -sha1
+          keytool -exportcert -keystore android/app/upload-keystore.jks -alias "$ANDROID_KEY_ALIAS" -storepass "$ANDROID_STORE_PASSWORD" | openssl dgst -sha256
+
           python - <<'PY'
           from pathlib import Path
           import re
