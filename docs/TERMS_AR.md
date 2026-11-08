@@ -1,3 +1,9 @@
+---
+layout: default
+title: "شروط الاستخدام"
+permalink: /terms/
+---
+
 # شروط الاستخدام — SirSir Travel Morocco
 
 **تاريخ المراجعة:** 8 نوفمبر 2026  
