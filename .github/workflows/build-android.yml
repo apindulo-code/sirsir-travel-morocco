@@ -4,6 +4,10 @@ concurrency:
   group: sirsir-travel-morocco-release-v2
   cancel-in-progress: true
 
+# This workflow only needs to read the repository; keep GITHUB_TOKEN least-privileged.
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
   push:
