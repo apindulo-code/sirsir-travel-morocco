@@ -267,8 +267,9 @@ jobs:
           arch: x86_64
           profile: pixel_2
           disable-animations: true
-          script: |
-            timeout --signal=TERM --kill-after=10s 8m flutter test integration_test/app_launch_test.dart --reporter expanded
+          emulator-boot-timeout: 900
+          # The action runs scripts with /bin/sh; invoke Bash explicitly for pipefail compatibility.
+          script: bash -c 'timeout --signal=TERM --kill-after=10s 8m flutter test integration_test/app_launch_test.dart --reporter expanded'
 
       - name: Capture emulator diagnostics after launch-test failure
         if: failure()
