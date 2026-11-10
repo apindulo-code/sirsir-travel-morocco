@@ -206,7 +206,11 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
     }
   }
 
-  Future<bool> _restoreWeatherCache(double lat, double lon) async {
+  Future<bool> _restoreWeatherCache(
+    double lat,
+    double lon, {
+    required int requestGeneration,
+  }) async {
     try {
       final preferences = await SharedPreferences.getInstance();
       final raw = preferences.getString(_weatherCacheKey(lat, lon));
@@ -222,7 +226,9 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
           savedAt is! int) {
         return false;
       }
-      if (!mounted) return false;
+      if (!mounted || requestGeneration != _weatherRequestGeneration) {
+        return false;
+      }
       setState(() {
         weather = cachedWeather;
         prayer = cachedPrayer;
@@ -308,7 +314,11 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
       );
     } catch (_) {
       if (!mounted || requestGeneration != _weatherRequestGeneration) return;
-      final restored = await _restoreWeatherCache(lat, lon);
+      final restored = await _restoreWeatherCache(
+        lat,
+        lon,
+        requestGeneration: requestGeneration,
+      );
       if (!restored && mounted && requestGeneration == _weatherRequestGeneration) {
         setState(() {
           loading = false;
