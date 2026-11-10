@@ -1,7 +1,7 @@
 name: Build Android APK
 
 concurrency:
-  group: sirsir-travel-morocco-release-v2
+  group: sirsir-travel-morocco-${{ github.ref }}
   cancel-in-progress: true
 
 # This workflow only needs to read the repository; keep GITHUB_TOKEN least-privileged.
