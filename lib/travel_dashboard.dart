@@ -241,7 +241,16 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
   Future<void> _load(double lat,double lon,String label) async {
     final requestGeneration = ++_weatherRequestGeneration;
     if (!mounted) return;
-    setState(() { loading=true; error=null; location=label; });
+    setState(() {
+      loading = true;
+      error = null;
+      location = label;
+      weather = null;
+      prayer = null;
+      sea = null;
+      dataUpdatedAt = null;
+      usingCachedData = false;
+    });
     try {
       final w=Uri.https('api.open-meteo.com','/v1/forecast',{
         'latitude':'$lat','longitude':'$lon',
