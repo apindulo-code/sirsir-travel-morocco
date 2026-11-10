@@ -65,9 +65,7 @@ service cloud.firestore {
         && request.resource.data.updatedAt is timestamp;
       allow delete: if owns(uid);
 
-      match /{subcollection}/{document=**} {
-        allow read, write: if owns(uid);
-      }
+      // No user subcollections are used by the app. Unmatched paths are denied below.
     }
 
     match /bookings/{bookingId} {
