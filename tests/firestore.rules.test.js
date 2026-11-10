@@ -13,6 +13,8 @@ import {
   getDocs,
   setDoc,
   addDoc,
+  updateDoc,
+  deleteDoc,
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore';
@@ -126,4 +128,67 @@ test('reviews are private to their author and validated', async () => {
     comment: 'Invalid rating',
     createdAt: serverTimestamp(),
   }));
+});
+
+
+test('profile updates are owner-only and restricted to approved fields', async () => {
+  const ownerDb = env.authenticatedContext('user-a').firestore();
+  const otherDb = env.authenticatedContext('user-b').firestore();
+  const ownerProfile = doc(ownerDb, 'users/user-a');
+
+  await assertSucceeds(setDoc(ownerProfile, profile('user-a')));
+  await assertSucceeds(updateDoc(ownerProfile, {
+    displayName: 'Updated User',
+    updatedAt: serverTimestamp(),
+  }));
+  await assertFails(updateDoc(doc(otherDb, 'users/user-a'), {
+    displayName: 'Unauthorized edit',
+    updatedAt: serverTimestamp(),
+  }));
+  await assertFails(updateDoc(ownerProfile, { uid: 'user-b' }));
+});
+
+test('booking cancellation is owner-only and cannot rewrite booking details', async () => {
+  const ownerDb = env.authenticatedContext('user-a').firestore();
+  const otherDb = env.authenticatedContext('user-b').firestore();
+  const created = await assertSucceeds(addDoc(
+    collection(ownerDb, 'bookings'),
+    booking('user-a'),
+  ));
+  const ownerBooking = doc(ownerDb, 'bookings', created.id);
+
+  await assertFails(deleteDoc(doc(otherDb, 'bookings', created.id)));
+  await assertSucceeds(updateDoc(ownerBooking, {
+    status: 'cancelled',
+    updatedAt: serverTimestamp(),
+  }));
+  await assertFails(updateDoc(ownerBooking, {
+    destination: 'مراكش',
+  }));
+});
+
+test('review changes and deletion are restricted to the review owner', async () => {
+  const ownerDb = env.authenticatedContext('user-a').firestore();
+  const otherDb = env.authenticatedContext('user-b').firestore();
+  const created = await assertSucceeds(addDoc(collection(ownerDb, 'reviews'), {
+    userId: 'user-a',
+    subjectId: 'destination-1',
+    subjectType: 'destination',
+    rating: 4,
+    comment: 'Initial review',
+    createdAt: serverTimestamp(),
+  }));
+  const ownerReview = doc(ownerDb, 'reviews', created.id);
+
+  await assertFails(updateDoc(doc(otherDb, 'reviews', created.id), {
+    rating: 1,
+    comment: 'Unauthorized edit',
+  }));
+  await assertSucceeds(updateDoc(ownerReview, {
+    rating: 5,
+    comment: 'Updated review',
+  }));
+  await assertFails(updateDoc(ownerReview, { userId: 'user-b' }));
+  await assertFails(deleteDoc(doc(otherDb, 'reviews', created.id)));
+  await assertSucceeds(deleteDoc(ownerReview));
 });
