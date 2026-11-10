@@ -74,6 +74,14 @@ test('a user can create and read their own profile but not another profile', asy
   await assertFails(getDoc(doc(db, 'users/user-b')));
 });
 
+test('users cannot create untracked subcollections under their profile', async () => {
+  const db = env.authenticatedContext('user-a').firestore();
+  await assertFails(setDoc(
+    doc(db, 'users/user-a/private-data/secret'),
+    { note: 'This path is not part of the supported user data model' },
+  ));
+});
+
 test('public travel catalog is readable but never writable from a client', async () => {
   const db = env.unauthenticatedContext().firestore();
   await assertSucceeds(getDocs(collection(db, 'destinations')));
