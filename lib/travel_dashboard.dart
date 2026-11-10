@@ -30,6 +30,8 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
   bool loading = true;
   String? error;
   Map<String,dynamic>? weather, sea, prayer;
+  DateTime? dataUpdatedAt;
+  bool usingCachedData = false;
   String location = 'المدينة المختارة';
   List<TravelNewsItem> headlines = [];
   int _weatherRequestGeneration = 0;
@@ -181,10 +183,80 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
     final p = cities[name]!;
     await _load(p[0], p[1], name);
   }
+  String _weatherCacheKey(double lat, double lon) =>
+      'travel_weather_cache_${lat.toStringAsFixed(2)}_${lon.toStringAsFixed(2)}';
+
+  Future<void> _saveWeatherCache({
+    required double lat,
+    required double lon,
+    required Map<String, dynamic> weatherPayload,
+    required Map<String, dynamic> prayerData,
+    Map<String, dynamic>? marineData,
+  }) async {
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      await preferences.setString(_weatherCacheKey(lat, lon), jsonEncode({
+        'weather': weatherPayload,
+        'prayer': prayerData,
+        'sea': marineData,
+        'savedAt': DateTime.now().millisecondsSinceEpoch,
+      }));
+    } catch (_) {
+      // Caching is best-effort; a storage failure must not block live data.
+    }
+  }
+
+  Future<bool> _restoreWeatherCache(
+    double lat,
+    double lon, {
+    required int requestGeneration,
+  }) async {
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      final raw = preferences.getString(_weatherCacheKey(lat, lon));
+      if (raw == null) return false;
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) return false;
+      final cachedWeather = decoded['weather'];
+      final cachedPrayer = decoded['prayer'];
+      final cachedSea = decoded['sea'];
+      final savedAt = decoded['savedAt'];
+      if (cachedWeather is! Map<String, dynamic> ||
+          cachedPrayer is! Map<String, dynamic> ||
+          savedAt is! int) {
+        return false;
+      }
+      if (!mounted || requestGeneration != _weatherRequestGeneration) {
+        return false;
+      }
+      setState(() {
+        weather = cachedWeather;
+        prayer = cachedPrayer;
+        sea = cachedSea is Map<String, dynamic> ? cachedSea : null;
+        dataUpdatedAt = DateTime.fromMillisecondsSinceEpoch(savedAt);
+        usingCachedData = true;
+        loading = false;
+        error = 'لا يوجد اتصال حالياً. المعروض بيانات محفوظة وقد لا تعكس الحالة الحالية.';
+      });
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> _load(double lat,double lon,String label) async {
     final requestGeneration = ++_weatherRequestGeneration;
     if (!mounted) return;
-    setState(() { loading=true; error=null; location=label; });
+    setState(() {
+      loading = true;
+      error = null;
+      location = label;
+      weather = null;
+      prayer = null;
+      sea = null;
+      dataUpdatedAt = null;
+      usingCachedData = false;
+    });
     try {
       final w=Uri.https('api.open-meteo.com','/v1/forecast',{
         'latitude':'$lat','longitude':'$lon',
@@ -224,18 +296,36 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
         marineData = null;
       }
       if (!mounted || requestGeneration != _weatherRequestGeneration) return;
+      final updatedAt = DateTime.now();
       setState(() {
         weather = weatherPayload;
         prayer = prayerData;
         sea = marineData;
+        dataUpdatedAt = updatedAt;
+        usingCachedData = false;
         loading = false;
       });
+      await _saveWeatherCache(
+        lat: lat,
+        lon: lon,
+        weatherPayload: weatherPayload,
+        prayerData: prayerData,
+        marineData: marineData,
+      );
     } catch (_) {
       if (!mounted || requestGeneration != _weatherRequestGeneration) return;
-      setState(() {
-        loading = false;
-        error = 'تعذر جلب البيانات. تحقق من الإنترنت ثم حدّث الصفحة.';
-      });
+      final restored = await _restoreWeatherCache(
+        lat,
+        lon,
+        requestGeneration: requestGeneration,
+      );
+      if (!restored && mounted && requestGeneration == _weatherRequestGeneration) {
+        setState(() {
+          loading = false;
+          usingCachedData = false;
+          error = 'تعذر جلب البيانات. تحقق من الإنترنت ثم حدّث الصفحة.';
+        });
+      }
     }
   }
   void _msg(String s){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(s)));}
@@ -262,6 +352,19 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
         Row(children:[const Icon(Icons.travel_explore,color:Colors.white),const SizedBox(width:8),const Expanded(child:Text('مركز معلومات السفر',style:TextStyle(color:Colors.white,fontWeight:FontWeight.bold,fontSize:17))),IconButton(onPressed:loading?null:(){_loadCity(city);_loadNews();},icon:const Icon(Icons.refresh,color:Colors.white))]),
         Row(children:[Expanded(child:DropdownButton<String>(value:city,isExpanded:true,dropdownColor:Colors.white,underline:const SizedBox.shrink(),style:const TextStyle(color:Colors.white),items:cities.keys.map((n)=>DropdownMenuItem(value:n,child:Text(n,style:const TextStyle(color:Colors.black)))).toList(),onChanged:loading?null:(v){if(v!=null)_loadCity(v);})),OutlinedButton.icon(onPressed:loading?null:_gps,icon:const Icon(Icons.my_location),label:const Text('موقعي'),style:OutlinedButton.styleFrom(foregroundColor:Colors.white))]),
         Align(alignment:Alignment.centerRight,child:Text(location,style:const TextStyle(color:Colors.white70,fontSize:11))),
+        if (dataUpdatedAt != null)
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              usingCachedData
+                  ? 'بيانات محفوظة • آخر تحديث: ${dataUpdatedAt!.toLocal()}'
+                  : 'آخر تحديث: ${dataUpdatedAt!.toLocal()}',
+              style: TextStyle(
+                color: usingCachedData ? Colors.orangeAccent : Colors.white70,
+                fontSize: 10,
+              ),
+            ),
+          ),
         const SizedBox(height:8),
         SizedBox(height:30,child:ClipRect(child:AnimatedBuilder(animation:ticker,builder:(context,_){
           final tickerText = headlines.isEmpty
