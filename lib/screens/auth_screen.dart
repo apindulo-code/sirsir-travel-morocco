@@ -195,6 +195,34 @@ class _AuthScreenState extends State<AuthScreen> {
                 if (user.email != null) Text(user.email!, textAlign: TextAlign.center),
                 if (user.phoneNumber != null) Text(user.phoneNumber!, textAlign: TextAlign.center),
                 const SizedBox(height: 22),
+                ExpansionTile(
+                  leading: const Icon(Icons.info_outline),
+                  title: const Text('معلومات التطبيق'),
+                  subtitle: const Text('الخصوصية وشروط الاستخدام'),
+                  tilePadding: EdgeInsets.zero,
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.privacy_tip_outlined),
+                      title: const Text('سياسة الخصوصية'),
+                      onTap: () => Navigator.push(context, MaterialPageRoute(
+                        builder: (_) => const LegalDocumentScreen(
+                          title: 'سياسة الخصوصية',
+                          assetPath: 'docs/PRIVACY_POLICY_AR.md',
+                        ),
+                      )),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.description_outlined),
+                      title: const Text('شروط الاستخدام'),
+                      onTap: () => Navigator.push(context, MaterialPageRoute(
+                        builder: (_) => const LegalDocumentScreen(
+                          title: 'شروط الاستخدام',
+                          assetPath: 'docs/TERMS_AR.md',
+                        ),
+                      )),
+                    ),
+                  ],
+                ),
                 if (user.email != null && !user.emailVerified)
                   OutlinedButton(
                     onPressed: () async {
@@ -368,34 +396,49 @@ class _AuthScreenState extends State<AuthScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey, fontSize: 12, height: 1.5)),
                 const SizedBox(height: 8),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const LegalDocumentScreen(
-                            title: 'سياسة الخصوصية',
-                            assetPath: 'docs/PRIVACY_POLICY_AR.md',
+                TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.grey.shade600,
+                    textStyle: const TextStyle(fontSize: 11),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: const Size(44, 36),
+                  ),
+                  onPressed: () => showModalBottomSheet<void>(
+                    context: context,
+                    builder: (sheetContext) => SafeArea(
+                      child: Wrap(
+                        children: [
+                          ListTile(
+                            leading: const Icon(Icons.privacy_tip_outlined),
+                            title: const Text('سياسة الخصوصية'),
+                            onTap: () {
+                              Navigator.pop(sheetContext);
+                              Navigator.push(context, MaterialPageRoute(
+                                builder: (_) => const LegalDocumentScreen(
+                                  title: 'سياسة الخصوصية',
+                                  assetPath: 'docs/PRIVACY_POLICY_AR.md',
+                                ),
+                              ));
+                            },
                           ),
-                        ),
-                      ),
-                      child: const Text('سياسة الخصوصية'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const LegalDocumentScreen(
-                            title: 'شروط الاستخدام',
-                            assetPath: 'docs/TERMS_AR.md',
+                          ListTile(
+                            leading: const Icon(Icons.description_outlined),
+                            title: const Text('شروط الاستخدام'),
+                            onTap: () {
+                              Navigator.pop(sheetContext);
+                              Navigator.push(context, MaterialPageRoute(
+                                builder: (_) => const LegalDocumentScreen(
+                                  title: 'شروط الاستخدام',
+                                  assetPath: 'docs/TERMS_AR.md',
+                                ),
+                              ));
+                            },
                           ),
-                        ),
+                        ],
                       ),
-                      child: const Text('شروط الاستخدام'),
                     ),
-                  ],
+                  ),
+                  child: const Text('الخصوصية والشروط'),
                 ),
               ],
             ),
