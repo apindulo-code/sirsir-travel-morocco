@@ -265,34 +265,50 @@ jobs:
           if-no-files-found: error
 
 
-      # Keep deliverables available even if the emulator smoke test is slow or fails.
+      # Use a stable Google APIs image and software rendering on hosted Linux runners.
+      # Keep this as a required release gate: APK/Web artifacts are uploaded before this step.
       - name: Verify Android app launch on emulator
         id: emulator_smoke
-        continue-on-error: true
-        timeout-minutes: 18
+        timeout-minutes: 20
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
+          api-level: 34
+          target: google_apis
           arch: x86_64
           profile: pixel_2
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none
           disable-animations: true
-          emulator-boot-timeout: 900
-          # The action runs scripts with /bin/sh; invoke Bash explicitly for pipefail compatibility.
-          script: bash -c 'timeout --signal=TERM --kill-after=10s 8m flutter test integration_test/app_launch_test.dart --reporter expanded'
+          emulator-boot-timeout: 600
+          script: |
+            set -eu
+            adb wait-for-device
+            for attempt in $(seq 1 60); do
+              booted="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+              if [ "$booted" = "1" ]; then
+                break
+              fi
+              sleep 5
+            done
+            test "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1"
+            adb shell settings put global window_animation_scale 0
+            adb shell settings put global transition_animation_scale 0
+            adb shell settings put global animator_duration_scale 0
+            timeout --signal=TERM --kill-after=10s 8m flutter test integration_test/app_launch_test.dart --reporter expanded
 
       - name: Capture emulator diagnostics after launch-test failure
-        if: steps.emulator_smoke.outcome == 'failure'
+        if: ${{ failure() && steps.emulator_smoke.outcome == 'failure' }}
         timeout-minutes: 3
         shell: bash
         run: |
           mkdir -p build/emulator-diagnostics
           timeout 15s adb devices -l > build/emulator-diagnostics/adb-devices.txt 2>&1 || true
-          timeout 30s adb logcat -d -t 1000 > build/emulator-diagnostics/logcat.txt 2>&1 || true
+          timeout 30s adb logcat -d -t 1500 > build/emulator-diagnostics/logcat.txt 2>&1 || true
+          timeout 20s adb shell getprop > build/emulator-diagnostics/getprop.txt 2>&1 || true
           timeout 20s adb shell dumpsys activity activities > build/emulator-diagnostics/activities.txt 2>&1 || true
           timeout 20s adb shell dumpsys package ma.sirsirtravel.morocco > build/emulator-diagnostics/package.txt 2>&1 || true
 
       - name: Upload emulator diagnostics
-        if: steps.emulator_smoke.outcome == 'failure'
+        if: ${{ always() && steps.emulator_smoke.outcome == 'failure' }}
         uses: actions/upload-artifact@v4
         with:
           name: sirsir-emulator-diagnostics-${{ github.run_number }}
