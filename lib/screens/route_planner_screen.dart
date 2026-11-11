@@ -224,17 +224,18 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                       ],
                     ),
                   ),
-                if (_error != null && _origin != _destination)
+                if (_error != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: Column(
                       children: [
                         Text(_error!, style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
-                        TextButton.icon(
-                          onPressed: _loading ? null : _findRoute,
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('إعادة المحاولة'),
-                        ),
+                        if (_origin != _destination)
+                          TextButton.icon(
+                            onPressed: _loading ? null : _findRoute,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('إعادة المحاولة'),
+                          ),
                       ],
                     ),
                   ),
