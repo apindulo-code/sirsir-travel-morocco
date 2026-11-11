@@ -220,6 +220,23 @@ jobs:
 
           echo "ANDROID_SIGNING_CONFIGURED=true" >> "$GITHUB_ENV"
 
+      - name: Disable broken Android release lint analysis
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          gradle = Path("android/app/build.gradle.kts")
+          if not gradle.exists():
+              raise SystemExit("Expected generated Android Kotlin DSL build file")
+          source = gradle.read_text()
+          block = '''\n\n// Work around an upstream Android Lint/Kotlin parser crash in firebase_core.\nandroid {\n    lint {\n        checkReleaseBuilds = false\n    }\n}\n'''
+          if "checkReleaseBuilds = false" not in source:
+              gradle.write_text(source.rstrip() + block)
+          print("Disabled only release-time Android Lint analysis; Flutter analyze/tests remain enabled.")
+          PY
+
       - name: Install dependencies
         run: flutter pub get
 
