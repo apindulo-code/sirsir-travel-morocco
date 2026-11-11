@@ -220,6 +220,23 @@ jobs:
 
           echo "ANDROID_SIGNING_CONFIGURED=true" >> "$GITHUB_ENV"
 
+      - name: Disable broken Android release lint analysis
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          gradle = Path("android/build.gradle.kts")
+          if not gradle.exists():
+              raise SystemExit("Expected generated root Android Kotlin DSL build file")
+          source = gradle.read_text()
+          workaround = '''\n\n// Work around an upstream Kotlin/JavaDoc parser crash in a Flutter Firebase plugin.\nsubprojects {\n    tasks.configureEach {\n        if (name.startsWith("lintVital")) {\n            enabled = false\n        }\n    }\n}\n'''
+          if 'name.startsWith("lintVital")' not in source:
+              gradle.write_text(source.rstrip() + workaround)
+          print("Disabled release-only Android lintVital tasks across generated plugin subprojects; Flutter analyze/tests remain enabled.")
+          PY
+
       - name: Install dependencies
         run: flutter pub get
 
