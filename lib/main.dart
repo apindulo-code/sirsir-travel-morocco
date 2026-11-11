@@ -8,6 +8,7 @@ import 'firebase_options.dart';
 import 'screens/auth_screen.dart';
 import 'screens/route_planner_screen.dart';
 import 'services/firestore_service.dart';
+import 'services/favorites_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -392,6 +393,11 @@ class _HomeScreenState extends State<HomeScreen> {
               PopupMenuItem(value: 'fr', child: Text('Français')),
               PopupMenuItem(value: 'es', child: Text('Español')),
             ],
+          ),
+          IconButton(
+            icon: const Icon(Icons.favorite_outline),
+            tooltip: 'المفضلة',
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen())),
           ),
           IconButton(
             icon: Icon(Icons.confirmation_number_outlined),
@@ -907,8 +913,64 @@ const List<TouristPlace> touristPlaces = [
   ),
 ];
 
-class DiscoverScreen extends StatelessWidget {
+
+class FavoritesScreen extends StatefulWidget {
+  const FavoritesScreen({super.key});
+  @override
+  State<FavoritesScreen> createState() => _FavoritesScreenState();
+}
+
+class _FavoritesScreenState extends State<FavoritesScreen> {
+  late Future<List<String>> _future;
+  @override
+  void initState() { super.initState(); _future = FavoritesService.getFavorites(); }
+  Future<void> _remove(String name) async {
+    await FavoritesService.toggleFavorite(name);
+    if (mounted) setState(() => _future = FavoritesService.getFavorites());
+  }
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('المفضلة')),
+    body: FutureBuilder<List<String>>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+        final saved = snapshot.data ?? <String>[];
+        final places = touristPlaces.where((p) => saved.contains(p.name)).toList();
+        if (places.isEmpty) return const Center(child: Text('لا توجد أماكن مفضلة بعد'));
+        return ListView.builder(
+          padding: const EdgeInsets.all(16), itemCount: places.length,
+          itemBuilder: (context, index) {
+            final place = places[index];
+            return Card(child: ListTile(
+              title: Text(place.name), subtitle: Text('${place.city} • ${place.description}'),
+              trailing: IconButton(icon: const Icon(Icons.favorite, color: primaryRed), onPressed: () => _remove(place.name)),
+            ));
+          },
+        );
+      },
+    ),
+  );
+}
+
+class DiscoverScreen extends StatefulWidget {
   const DiscoverScreen({super.key});
+  @override
+  State<DiscoverScreen> createState() => _DiscoverScreenState();
+}
+
+class _DiscoverScreenState extends State<DiscoverScreen> {
+  Set<String> _favorites = <String>{};
+  @override
+  void initState() { super.initState(); _loadFavorites(); }
+  Future<void> _loadFavorites() async {
+    final names = await FavoritesService.getFavorites();
+    if (mounted) setState(() => _favorites = names.toSet());
+  }
+  Future<void> _toggleFavorite(TouristPlace place) async {
+    await FavoritesService.toggleFavorite(place.name);
+    await _loadFavorites();
+  }
 
   Future<void> _openMap(BuildContext context, TouristPlace place) async {
     final query = Uri.encodeComponent('${place.name} ${place.city} المغرب');
@@ -924,7 +986,7 @@ class DiscoverScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(tr('اكتشف المغرب'))),
+      appBar: AppBar(title: Text(tr('اكتشف المغرب')), actions: [IconButton(tooltip: 'المفضلة', icon: const Icon(Icons.favorite_outline), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen())).then((_) => _loadFavorites()))]),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -957,11 +1019,10 @@ class DiscoverScreen extends StatelessWidget {
                       style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text('${place.city} • ${place.description}'),
                   isThreeLine: true,
-                  trailing: IconButton(
-                    tooltip: 'افتح على الخريطة',
-                    icon: Icon(Icons.map_outlined, color: primaryRed),
-                    onPressed: () => _openMap(context, place),
-                  ),
+                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                    IconButton(tooltip: 'المفضلة', icon: Icon(_favorites.contains(place.name) ? Icons.favorite : Icons.favorite_border, color: primaryRed), onPressed: () => _toggleFavorite(place)),
+                    IconButton(tooltip: 'افتح على الخريطة', icon: const Icon(Icons.map_outlined, color: primaryRed), onPressed: () => _openMap(context, place)),
+                  ]),
                   onTap: () => _openMap(context, place),
                 ),
               )),
