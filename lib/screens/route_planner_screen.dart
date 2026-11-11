@@ -152,7 +152,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                 DropdownButtonFormField<String>(
                   value: _origin,
                   isExpanded: true,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: _text('مدينة الانطلاق', 'Departure city', 'Ville de départ', 'Ciudad de salida'),
                     prefixIcon: Icon(Icons.trip_origin),
                   ),
@@ -176,7 +176,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                 DropdownButtonFormField<String>(
                   value: _destination,
                   isExpanded: true,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: _text('مدينة الوصول', 'Destination city', 'Ville d’arrivée', 'Ciudad de destino'),
                     prefixIcon: Icon(Icons.location_on),
                   ),
@@ -311,8 +311,8 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
               ),
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(12, 0, 12, 10),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
             child: Text(
               _text('المسافة والمدة تقدير آلي للمسار البري وليستا ضماناً لوقت الوصول. تحقق من حالة الطرق والإغلاقات قبل السفر.', 'Distance and duration are estimates for road travel, not a guaranteed arrival time. Check road conditions and closures before travelling.', 'La distance et la durée sont des estimations routières et ne garantissent pas l’heure d’arrivée. Vérifiez l’état des routes et les fermetures avant de partir.', 'La distancia y la duración son estimaciones por carretera, no garantizan la hora de llegada. Comprueba el estado de las carreteras y los cierres antes de viajar.'),
               textAlign: TextAlign.center,
