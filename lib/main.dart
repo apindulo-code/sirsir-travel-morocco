@@ -33,6 +33,7 @@ const Map<String, List<String>> appTranslations = {
   'لا توجد أماكن مفضلة بعد': ['No saved places yet', 'Aucun lieu enregistré pour le moment', 'Aún no hay lugares guardados'],
   'إزالة من المفضلة': ['Remove from favorites', 'Retirer des favoris', 'Quitar de favoritos'],
   'تعذر حفظ التغيير. حاول مرة أخرى.': ['Could not save the change. Please try again.', 'Impossible d’enregistrer la modification. Veuillez réessayer.', 'No se pudo guardar el cambio. Inténtalo de nuevo.'],
+  'تعذر تحميل المفضلة. حاول مرة أخرى.': ['Could not load favorites. Please try again.', 'Impossible de charger les favoris. Veuillez réessayer.', 'No se pudieron cargar los favoritos. Inténtalo de nuevo.'],
   'أزقة تاريخية وأسواق تقليدية، وهي جزء من التراث العالمي لليونسكو.': ['Historic alleys and traditional markets, part of the UNESCO World Heritage site.', 'Ruelles historiques et marchés traditionnels faisant partie du site du patrimoine mondial de l’UNESCO.', 'Callejuelas históricas y mercados tradicionales que forman parte del Patrimonio Mundial de la UNESCO.'],
   'قصبة تاريخية وحديقة هادئة في قلب المدينة الزرقاء.': ['A historic kasbah and peaceful garden in the heart of the Blue City.', 'Une kasbah historique et un jardin paisible au cœur de la ville bleue.', 'Una kasbah histórica y un jardín tranquilo en el corazón de la ciudad azul.'],
   'منطقة طبيعية معروفة بمياهها الجارية وإطلالاتها الجبلية.': ['A natural area known for its flowing water and mountain views.', 'Un site naturel connu pour ses eaux courantes et ses vues sur les montagnes.', 'Un paraje natural conocido por sus aguas corrientes y vistas a las montañas.'],
@@ -978,7 +979,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
-          return Center(child: Text(tr('تعذر حفظ التغيير. حاول مرة أخرى.')));
+          return Center(child: Text(tr('تعذر تحميل المفضلة. حاول مرة أخرى.')));
         }
         final saved = snapshot.data ?? <String>[];
         final places = touristPlaces.where((p) => saved.contains(p.name)).toList();
