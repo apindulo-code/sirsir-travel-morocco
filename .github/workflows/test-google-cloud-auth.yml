@@ -49,6 +49,28 @@ jobs:
           gcloud auth print-access-token >/dev/null
           echo "Google Cloud authentication succeeded. No Firebase deployment was performed."
 
+      - name: Verify manual deployment workflow uses the same dedicated identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_identity="sirsir-github-deploy@sirsir-travel-morocco.iam.gserviceaccount.com"
+          configured_identity="$(python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          workflow = Path(".github/workflows/deploy-firestore-rules.yml").read_text()
+          identities = re.findall(r"^\\s*service_account:\\s*(\\S+)\\s*$", workflow, re.MULTILINE)
+          if len(identities) != 1:
+              raise SystemExit(f"Expected exactly one service_account entry, found {len(identities)}")
+          print(identities[0])
+          PY
+          )"
+          if [[ "${configured_identity}" != "${expected_identity}" ]]; then
+            echo "::error::Manual deploy workflow identity mismatch: ${configured_identity}"
+            exit 1
+          fi
+          echo "Manual Firestore deployment uses the verified dedicated identity."
+
       - name: Inspect Firebase backend resources (read-only)
         continue-on-error: true
         shell: bash
