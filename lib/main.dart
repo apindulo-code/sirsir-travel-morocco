@@ -113,7 +113,7 @@ const Map<String, List<String>> appTranslations = {
   'المدن الست مدرجة ضمن المواقع المرشحة في المغرب. الاختيار النهائي للملاعب والمدن لم يُحسم بعد من FIFA. السعات قيد التحقق.': ['This is general demo information. Live match or stadium-status data is not currently available.', 'Ces informations sont générales et données à titre de démonstration. Aucune donnée en direct sur les matchs ou l’état des stades n’est disponible.', 'Esta información es orientativa y de demostración. Actualmente no hay datos en directo sobre partidos o el estado de los estadios.'],
   'هذه مدينة وملعب مرشحان ضمن عملية التقييم. لا تعتبر هذه الصفحة إعلاناً عن ملعب مستضيف نهائي أو جدول مباريات.': ['Live matches and alerts will require an official schedule and results data source.', 'Les matchs et alertes en direct nécessiteront une source officielle pour les calendriers et les résultats.', 'Los partidos y avisos en directo requerirán una fuente oficial de horarios y resultados.'],
   'تعذر فتح الخرائط. تحقق من اتصال الإنترنت.': ['Could not open maps. Check your internet connection.', 'Impossible d’ouvrir les cartes. Vérifiez votre connexion Internet.', 'No se pudieron abrir los mapas. Comprueba tu conexión a Internet.'],
-  'وجهات مغربية تستحق الزيارة 🇲🇦\nاختر مكاناً وافتح موقعه على الخريطة.': ['Moroccan destinations worth visiting 🇲🇦\nChoose a place to view it on the map.', 'Des destinations marocaines à découvrir 🇲🇦\nChoisissez un lieu pour l’afficher sur la carte.', 'Destinos marroquíes que merecen una visita 🇲🇦\nElige un lugar para verlo en el mapa.'],
+  tr('وجهات مغربية تستحق الزيارة 🇲🇦\nاختر مكاناً وافتح موقعه على الخريطة.'): ['Moroccan destinations worth visiting 🇲🇦\nChoose a place to view it on the map.', 'Des destinations marocaines à découvrir 🇲🇦\nChoisissez un lieu pour l’afficher sur la carte.', 'Destinos marroquíes que merecen una visita 🇲🇦\nElige un lugar para verlo en el mapa.'],
   'افتح على الخريطة': ['Open map', 'Ouvrir la carte', 'Abrir mapa'],
   'هذه اقتراحات تعريفية للزيارة. تحقق من أوقات العمل وشروط الدخول قبل التنقل.': ['These are suggested places to visit. Check opening hours and entry requirements before travelling.', 'Ces lieux sont proposés à titre indicatif. Vérifiez les horaires et les conditions d’accès avant de vous déplacer.', 'Estos son lugares sugeridos para visitar. Comprueba los horarios y las condiciones de acceso antes de desplazarte.'],
 };
@@ -1020,11 +1020,16 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   void initState() { super.initState(); _loadFavorites(); }
   bool _savingFavorite = false;
 
-  Future<void> _loadFavorites({bool reload = false}) async {
-    final names = reload
-        ? await FavoritesService.reloadFavorites()
-        : await FavoritesService.getFavorites();
-    if (mounted) setState(() => _favorites = names.toSet());
+  Future<bool> _loadFavorites({bool reload = false}) async {
+    try {
+      final names = reload
+          ? await FavoritesService.reloadFavorites()
+          : await FavoritesService.getFavorites();
+      if (mounted) setState(() => _favorites = names.toSet());
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<void> _toggleFavorite(TouristPlace place) async {
@@ -1036,8 +1041,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     } catch (_) {
       saved = false;
     }
-    await _loadFavorites(reload: !saved);
-    if (!saved && mounted) {
+    final refreshed = await _loadFavorites(reload: !saved);
+    if ((!saved || !refreshed) && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(tr('تعذر حفظ التغيير. حاول مرة أخرى.'))),
       );
@@ -1051,7 +1056,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!opened && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('تعذر فتح الخرائط. تحقق من اتصال الإنترنت.')),
+        SnackBar(content: Text(tr('تعذر فتح الخرائط. تحقق من اتصال الإنترنت.'))),
       );
     }
   }
@@ -1059,7 +1064,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(tr('اكتشف المغرب')), actions: [IconButton(tooltip: 'المفضلة', icon: const Icon(Icons.favorite_outline), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen())).then((_) => _loadFavorites()))]),
+      appBar: AppBar(title: Text(tr('اكتشف المغرب')), actions: [IconButton(tooltip: tr('المفضلة'), icon: const Icon(Icons.favorite_outline), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen())).then((_) => _loadFavorites()))]),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -1088,20 +1093,20 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                     backgroundColor: Color(0xFFFFEBEE),
                     child: Icon(Icons.place, color: primaryRed),
                   ),
-                  title: Text(place.name,
+                  title: Text(tr(place.name),
                       style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('${place.city} • ${place.description}'),
+                  subtitle: Text('${cityLabel(place.city)} • ${tr(place.description)}'),
                   isThreeLine: true,
                   trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                     IconButton(tooltip: 'المفضلة', icon: Icon(_favorites.contains(place.name) ? Icons.favorite : Icons.favorite_border, color: primaryRed), onPressed: _savingFavorite ? null : () => _toggleFavorite(place)),
-                    IconButton(tooltip: 'افتح على الخريطة', icon: const Icon(Icons.map_outlined, color: primaryRed), onPressed: () => _openMap(context, place)),
+                    IconButton(tooltip: tr('افتح على الخريطة'), icon: const Icon(Icons.map_outlined, color: primaryRed), onPressed: () => _openMap(context, place)),
                   ]),
                   onTap: () => _openMap(context, place),
                 ),
               )),
           SizedBox(height: 8),
           Text(
-            'هذه اقتراحات تعريفية للزيارة. تحقق من أوقات العمل وشروط الدخول قبل التنقل.',
+            tr('هذه اقتراحات تعريفية للزيارة. تحقق من أوقات العمل وشروط الدخول قبل التنقل.'),
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey, fontSize: 12),
           ),
