@@ -936,30 +936,71 @@ class FavoritesScreen extends StatefulWidget {
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
   late Future<List<String>> _future;
+  bool _saving = false;
+
   @override
-  void initState() { super.initState(); _future = FavoritesService.getFavorites(); }
-  Future<void> _remove(String name) async {
-    await FavoritesService.toggleFavorite(name);
-    if (mounted) setState(() => _future = FavoritesService.getFavorites());
+  void initState() {
+    super.initState();
+    _future = FavoritesService.getFavorites();
   }
+
+  Future<void> _remove(String name) async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    var saved = false;
+    try {
+      saved = await FavoritesService.toggleFavorite(name);
+    } catch (_) {
+      saved = false;
+    }
+    if (!saved && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('تعذر حفظ التغيير. حاول مرة أخرى.'))),
+      );
+    }
+    if (mounted) {
+      setState(() {
+        _future = saved
+            ? FavoritesService.getFavorites()
+            : FavoritesService.reloadFavorites();
+        _saving = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('المفضلة')),
+    appBar: AppBar(title: Text(tr('المفضلة'))),
     body: FutureBuilder<List<String>>(
       future: _future,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text(tr('تعذر حفظ التغيير. حاول مرة أخرى.')));
+        }
         final saved = snapshot.data ?? <String>[];
         final places = touristPlaces.where((p) => saved.contains(p.name)).toList();
-        if (places.isEmpty) return const Center(child: Text('لا توجد أماكن مفضلة بعد'));
+        if (places.isEmpty) {
+          return Center(child: Text(tr('لا توجد أماكن مفضلة بعد')));
+        }
         return ListView.builder(
-          padding: const EdgeInsets.all(16), itemCount: places.length,
+          padding: const EdgeInsets.all(16),
+          itemCount: places.length,
           itemBuilder: (context, index) {
             final place = places[index];
-            return Card(child: ListTile(
-              title: Text(place.name), subtitle: Text('${place.city} • ${place.description}'),
-              trailing: IconButton(icon: const Icon(Icons.favorite, color: primaryRed), onPressed: () => _remove(place.name)),
-            ));
+            return Card(
+              child: ListTile(
+                title: Text(tr(place.name)),
+                subtitle: Text('${cityLabel(place.city)} • ${tr(place.description)}'),
+                trailing: IconButton(
+                  tooltip: tr('إزالة من المفضلة'),
+                  icon: const Icon(Icons.favorite, color: primaryRed),
+                  onPressed: _saving ? null : () => _remove(place.name),
+                ),
+              ),
+            );
           },
         );
       },
