@@ -30,6 +30,7 @@ const Map<String, List<String>> appTranslations = {
   'خريطة المغرب': ['Map of Morocco', 'Carte du Maroc', 'Mapa de Marruecos'],
   'اللغة': ['Language', 'Langue', 'Idioma'],
   'المفضلة': ['Favorites', 'Favoris', 'Favoritos'],
+  'وجهات مغربية تستحق الزيارة 🇲🇦\nاختر مكاناً وافتح موقعه على الخريطة.': ['Moroccan destinations worth visiting 🇲🇦\nChoose a place to open its map.', 'Des destinations marocaines à visiter 🇲🇦\nChoisissez un lieu pour ouvrir sa carte.', 'Destinos marroquíes que merecen una visita 🇲🇦\nElige un lugar para abrir su mapa.'],
   'لا توجد أماكن مفضلة بعد': ['No saved places yet', 'Aucun lieu enregistré pour le moment', 'Aún no hay lugares guardados'],
   'إزالة من المفضلة': ['Remove from favorites', 'Retirer des favoris', 'Quitar de favoritos'],
   'تعذر حفظ التغيير. حاول مرة أخرى.': ['Could not save the change. Please try again.', 'Impossible d’enregistrer la modification. Veuillez réessayer.', 'No se pudo guardar el cambio. Inténtalo de nuevo.'],
@@ -1080,7 +1081,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               borderRadius: BorderRadius.circular(18),
             ),
             child: Text(
-              'وجهات مغربية تستحق الزيارة 🇲🇦\nاختر مكاناً وافتح موقعه على الخريطة.',
+              tr('وجهات مغربية تستحق الزيارة 🇲🇦\nاختر مكاناً وافتح موقعه على الخريطة.'),
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 17,
