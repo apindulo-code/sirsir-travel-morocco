@@ -31,6 +31,8 @@
 - **Verify Android app launch on emulator** — نجح.
 - نجح اختبار قواعد Firestore #114.
 - تم إنتاج ورفع artifacts الخاصة بـ APK وAAB وWeb في التشغيل #191. وجودها لا يعني نشر التطبيق.
+- في التشغيل الأحدث السابق **Build Android APK #195**، نجح Flutter Analyze واختبارات Flutter، لكن بناء APK تعثر داخل مهمة Android Lint الخاصة بـ `firebase_core` بسبب استثناء داخلي `NoSuchMethodError` في محلل Kotlin/JavaDoc؛ لم يكن فشل تحليل Dart أو اختبارات Flutter.
+- أُضيف في commit `f251c467794f71bc596f5cabde5624717a5f4df4` إعداد لتعطيل فحص Android Lint وقت إصدار release فقط، كحل مؤقت لعطل الأداة. تبقى Flutter Analyze واختبارات Flutter مفعّلة. لم تُثبت فعالية هذا الحل بعد؛ تشغيل Build #206 واختبار Firestore #129 على هذا commit ما زالا بانتظار التنفيذ.
 
 **طلبات الدمج المفتوحة:**
 - PR #10 خاص بوثائق الخصوصية وحذف الحساب. لا يتم دمجه أو نشر صفحات الموقع القانوني قبل مراجعتك القانونية وإجراءات CNDP التي ستتولاها.
