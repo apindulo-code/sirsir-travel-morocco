@@ -9,6 +9,13 @@ class FavoritesService {
     return prefs.getStringList(_key) ?? <String>[];
   }
 
+  /// Refreshes the plugin cache from persistent storage after a failed write.
+  static Future<List<String>> reloadFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+    return prefs.getStringList(_key) ?? <String>[];
+  }
+
   static Future<bool> toggleFavorite(String placeName) async {
     final normalizedName = placeName.trim();
     if (normalizedName.isEmpty) return false;
