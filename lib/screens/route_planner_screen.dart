@@ -224,7 +224,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                       ],
                     ),
                   ),
-                if (_error != null)
+                if (_error != null && _origin != _destination)
                   Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: Column(
