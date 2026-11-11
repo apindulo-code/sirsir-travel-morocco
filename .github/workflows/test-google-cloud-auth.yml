@@ -59,7 +59,7 @@ jobs:
           from pathlib import Path
 
           workflow = Path(".github/workflows/deploy-firestore-rules.yml").read_text()
-          identities = re.findall(r"^\\s*service_account:\\s*(\\S+)\\s*$", workflow, re.MULTILINE)
+          identities = re.findall(r"^\s*service_account:\s*(\S+)\s*$", workflow, re.MULTILINE)
           if len(identities) != 1:
               raise SystemExit(f"Expected exactly one service_account entry, found {len(identities)}")
           print(identities[0])
