@@ -34,7 +34,16 @@ def main() -> int:
 
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
-        page = browser.new_page(viewport={"width": 390, "height": 844})
+        # GitHub-hosted runners may expose a non-BCP-47 system locale (for
+        # example, a POSIX locale with an underscore). Flutter web delegates
+        # locale formatting to the browser Intl API, which rejects that value.
+        # Pin a valid Moroccan Arabic locale so this smoke test is deterministic
+        # and exercises the app in its default language.
+        context = browser.new_context(
+            viewport={"width": 390, "height": 844},
+            locale="ar-MA",
+        )
+        page = context.new_page()
         page.on("pageerror", lambda error: page_errors.append(str(error)))
         page.on(
             "requestfailed",
