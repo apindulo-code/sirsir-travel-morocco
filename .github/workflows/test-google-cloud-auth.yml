@@ -25,7 +25,8 @@ jobs:
         with:
           project_id: sirsir-travel-morocco
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
-          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          # Use the same dedicated, least-privilege identity as the Firestore deploy workflow.
+          service_account: sirsir-github-deploy@sirsir-travel-morocco.iam.gserviceaccount.com
           create_credentials_file: true
           export_environment_variables: true
 
