@@ -6,13 +6,24 @@ import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 class RoutePlannerScreen extends StatefulWidget {
-  const RoutePlannerScreen({super.key});
+  final String language;
+
+  const RoutePlannerScreen({super.key, this.language = 'ar'});
 
   @override
   State<RoutePlannerScreen> createState() => _RoutePlannerScreenState();
 }
 
 class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
+  String _text(String ar, String en, String fr, String es) {
+    switch (widget.language) {
+      case 'en': return en;
+      case 'fr': return fr;
+      case 'es': return es;
+      default: return ar;
+    }
+  }
+
   static const Map<String, LatLng> _cities = {
     'طنجة': LatLng(35.7595, -5.8340),
     'تطوان': LatLng(35.5889, -5.3626),
@@ -53,7 +64,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
 
   Future<void> _findRoute() async {
     if (_origin == _destination) {
-      setState(() => _error = 'اختر مدينتين مختلفتين.');
+      setState(() => _error = _text('اختر مدينتين مختلفتين.', 'Choose two different cities.', 'Choisissez deux villes différentes.', 'Elige dos ciudades diferentes.'));
       return;
     }
     setState(() {
@@ -107,7 +118,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = 'تعذر حساب المسار الآن. يمكنك فتح الاتجاهات في خرائط Google.';
+        _error = _text('تعذر حساب المسار الآن. يمكنك فتح الاتجاهات في خرائط Google.', 'Could not calculate the route. You can open directions in Google Maps.', 'Impossible de calculer l’itinéraire. Vous pouvez ouvrir les directions dans Google Maps.', 'No se pudo calcular la ruta. Puedes abrir las indicaciones en Google Maps.');
       });
     }
   }
@@ -131,7 +142,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
         : LatLng((start.latitude + end.latitude) / 2, (start.longitude + end.longitude) / 2);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('مخطط الطريق داخل المغرب')),
+      appBar: AppBar(title: Text(_text('مخطط الطريق داخل المغرب', 'Route planner in Morocco', 'Planificateur d’itinéraire au Maroc', 'Planificador de rutas en Marruecos'))),
       body: Column(
         children: [
           Padding(
@@ -142,7 +153,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                   value: _origin,
                   isExpanded: true,
                   decoration: const InputDecoration(
-                    labelText: 'مدينة الانطلاق',
+                    labelText: _text('مدينة الانطلاق', 'Departure city', 'Ville de départ', 'Ciudad de salida'),
                     prefixIcon: Icon(Icons.trip_origin),
                   ),
                   items: _cities.keys.map((city) => DropdownMenuItem(
@@ -166,7 +177,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                   value: _destination,
                   isExpanded: true,
                   decoration: const InputDecoration(
-                    labelText: 'مدينة الوصول',
+                    labelText: _text('مدينة الوصول', 'Destination city', 'Ville d’arrivée', 'Ciudad de destino'),
                     prefixIcon: Icon(Icons.location_on),
                   ),
                   items: _cities.keys.map((city) => DropdownMenuItem(
@@ -194,12 +205,12 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                         icon: _loading
                             ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                             : const Icon(Icons.alt_route),
-                        label: Text(_loading ? 'جارٍ حساب الطريق…' : 'احسب الطريق'),
+                        label: Text(_loading ? _text('جارٍ حساب الطريق…', 'Calculating route…', 'Calcul de l’itinéraire…', 'Calculando ruta…') : _text('احسب الطريق', 'Calculate route', 'Calculer l’itinéraire', 'Calcular ruta')),
                       ),
                     ),
                     const SizedBox(width: 8),
                     IconButton.filledTonal(
-                      tooltip: 'تبديل المدينتين',
+                      tooltip: _text('تبديل المدينتين', 'Swap cities', 'Inverser les villes', 'Intercambiar ciudades'),
                       onPressed: _loading ? null : () => setState(() {
                         final previous = _origin;
                         _origin = _destination;
@@ -219,8 +230,8 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        Chip(avatar: const Icon(Icons.route, size: 18), label: Text('${_distanceKm!.round()} كم تقريباً')),
-                        Chip(avatar: const Icon(Icons.schedule, size: 18), label: Text('${(_durationMinutes! / 60).floor()} س ${(_durationMinutes! % 60).round()} د')),
+                        Chip(avatar: const Icon(Icons.route, size: 18), label: Text(_text('${_distanceKm!.round()} كم تقريباً', 'About ${_distanceKm!.round()} km', 'Environ ${_distanceKm!.round()} km', 'Aproximadamente ${_distanceKm!.round()} km'))),
+                        Chip(avatar: const Icon(Icons.schedule, size: 18), label: Text(_text('${(_durationMinutes! / 60).floor()} س ${(_durationMinutes! % 60).round()} د', '${(_durationMinutes! / 60).floor()} h ${(_durationMinutes! % 60).round()} min', '${(_durationMinutes! / 60).floor()} h ${(_durationMinutes! % 60).round()} min', '${(_durationMinutes! / 60).floor()} h ${(_durationMinutes! % 60).round()} min'))),
                       ],
                     ),
                   ),
@@ -234,7 +245,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                           TextButton.icon(
                             onPressed: _loading ? null : _findRoute,
                             icon: const Icon(Icons.refresh),
-                            label: const Text('إعادة المحاولة'),
+                            label: Text(_text('إعادة المحاولة', 'Retry', 'Réessayer', 'Reintentar')),
                           ),
                       ],
                     ),
@@ -296,14 +307,14 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
               child: OutlinedButton.icon(
                 onPressed: _openGoogleMaps,
                 icon: const Icon(Icons.open_in_new),
-                label: const Text('افتح الاتجاهات في خرائط Google'),
+                label: Text(_text('افتح الاتجاهات في خرائط Google', 'Open directions in Google Maps', 'Ouvrir l’itinéraire dans Google Maps', 'Abrir indicaciones en Google Maps')),
               ),
             ),
           ),
           const Padding(
             padding: EdgeInsets.fromLTRB(12, 0, 12, 10),
             child: Text(
-              'المسافة والمدة تقدير آلي للمسار البري وليستا ضماناً لوقت الوصول. تحقق من حالة الطرق والإغلاقات قبل السفر.',
+              _text('المسافة والمدة تقدير آلي للمسار البري وليستا ضماناً لوقت الوصول. تحقق من حالة الطرق والإغلاقات قبل السفر.', 'Distance and duration are estimates for road travel, not a guaranteed arrival time. Check road conditions and closures before travelling.', 'La distance et la durée sont des estimations routières et ne garantissent pas l’heure d’arrivée. Vérifiez l’état des routes et les fermetures avant de partir.', 'La distancia y la duración son estimaciones por carretera, no garantizan la hora de llegada. Comprueba el estado de las carreteras y los cierres antes de viajar.'),
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 11, color: Colors.grey),
             ),
