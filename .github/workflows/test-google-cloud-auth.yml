@@ -37,7 +37,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gcloud auth list --filter=status:ACTIVE --format='value(account)'
+          expected_identity="sirsir-github-deploy@sirsir-travel-morocco.iam.gserviceaccount.com"
+          active_identity="$(gcloud auth list --filter=status:ACTIVE --format='value(account)')"
+          echo "Authenticated identity: ${active_identity}"
+          if [[ "${active_identity}" != "${expected_identity}" ]]; then
+            echo "::error::Expected ${expected_identity}, but authenticated as ${active_identity:-<none>}."
+            exit 1
+          fi
           gcloud config set project sirsir-travel-morocco
           gcloud auth print-access-token >/dev/null
           echo "Google Cloud authentication succeeded. No Firebase deployment was performed."
