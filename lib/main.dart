@@ -637,7 +637,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
                 onPressed: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const RoutePlannerScreen()),
+                  MaterialPageRoute(builder: (_) => RoutePlannerScreen(language: appLanguage.value)),
                 ),
               ),
             ),
