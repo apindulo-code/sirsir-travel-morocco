@@ -410,7 +410,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.favorite_outline),
-            tooltip: 'المفضلة',
+            tooltip: tr('المفضلة'),
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen())),
           ),
           IconButton(
@@ -1018,13 +1018,31 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   Set<String> _favorites = <String>{};
   @override
   void initState() { super.initState(); _loadFavorites(); }
-  Future<void> _loadFavorites() async {
-    final names = await FavoritesService.getFavorites();
+  bool _savingFavorite = false;
+
+  Future<void> _loadFavorites({bool reload = false}) async {
+    final names = reload
+        ? await FavoritesService.reloadFavorites()
+        : await FavoritesService.getFavorites();
     if (mounted) setState(() => _favorites = names.toSet());
   }
+
   Future<void> _toggleFavorite(TouristPlace place) async {
-    await FavoritesService.toggleFavorite(place.name);
-    await _loadFavorites();
+    if (_savingFavorite) return;
+    setState(() => _savingFavorite = true);
+    var saved = false;
+    try {
+      saved = await FavoritesService.toggleFavorite(place.name);
+    } catch (_) {
+      saved = false;
+    }
+    await _loadFavorites(reload: !saved);
+    if (!saved && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('تعذر حفظ التغيير. حاول مرة أخرى.'))),
+      );
+    }
+    if (mounted) setState(() => _savingFavorite = false);
   }
 
   Future<void> _openMap(BuildContext context, TouristPlace place) async {
@@ -1075,7 +1093,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   subtitle: Text('${place.city} • ${place.description}'),
                   isThreeLine: true,
                   trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                    IconButton(tooltip: 'المفضلة', icon: Icon(_favorites.contains(place.name) ? Icons.favorite : Icons.favorite_border, color: primaryRed), onPressed: () => _toggleFavorite(place)),
+                    IconButton(tooltip: 'المفضلة', icon: Icon(_favorites.contains(place.name) ? Icons.favorite : Icons.favorite_border, color: primaryRed), onPressed: _savingFavorite ? null : () => _toggleFavorite(place)),
                     IconButton(tooltip: 'افتح على الخريطة', icon: const Icon(Icons.map_outlined, color: primaryRed), onPressed: () => _openMap(context, place)),
                   ]),
                   onTap: () => _openMap(context, place),
