@@ -1103,7 +1103,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   subtitle: Text('${cityLabel(place.city)} • ${tr(place.description)}'),
                   isThreeLine: true,
                   trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                    IconButton(tooltip: 'المفضلة', icon: Icon(_favorites.contains(place.name) ? Icons.favorite : Icons.favorite_border, color: primaryRed), onPressed: _savingFavorite ? null : () => _toggleFavorite(place)),
+                    IconButton(tooltip: tr('المفضلة'), icon: Icon(_favorites.contains(place.name) ? Icons.favorite : Icons.favorite_border, color: primaryRed), onPressed: _savingFavorite ? null : () => _toggleFavorite(place)),
                     IconButton(tooltip: tr('افتح على الخريطة'), icon: const Icon(Icons.map_outlined, color: primaryRed), onPressed: () => _openMap(context, place)),
                   ]),
                   onTap: () => _openMap(context, place),
