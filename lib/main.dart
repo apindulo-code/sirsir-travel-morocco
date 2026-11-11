@@ -1036,18 +1036,22 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     if (_savingFavorite) return;
     setState(() => _savingFavorite = true);
     var saved = false;
+    var refreshed = false;
     try {
-      saved = await FavoritesService.toggleFavorite(place.name);
-    } catch (_) {
-      saved = false;
+      try {
+        saved = await FavoritesService.toggleFavorite(place.name);
+      } catch (_) {
+        saved = false;
+      }
+      refreshed = await _loadFavorites(reload: !saved);
+      if ((!saved || !refreshed) && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(tr('تعذر حفظ التغيير. حاول مرة أخرى.'))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _savingFavorite = false);
     }
-    final refreshed = await _loadFavorites(reload: !saved);
-    if ((!saved || !refreshed) && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr('تعذر حفظ التغيير. حاول مرة أخرى.'))),
-      );
-    }
-    if (mounted) setState(() => _savingFavorite = false);
   }
 
   Future<void> _openMap(BuildContext context, TouristPlace place) async {
