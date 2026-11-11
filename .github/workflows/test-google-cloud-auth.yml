@@ -5,6 +5,7 @@ name: Test Google Cloud Workload Identity
   push:
     branches:
       - main
+      - security/use-least-privilege-wif-account
 
 permissions:
   contents: read
