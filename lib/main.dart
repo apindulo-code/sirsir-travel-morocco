@@ -8,6 +8,7 @@ import 'firebase_options.dart';
 import 'screens/auth_screen.dart';
 import 'screens/route_planner_screen.dart';
 import 'services/firestore_service.dart';
+import 'services/favorites_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -28,6 +29,22 @@ const Map<String, List<String>> appTranslations = {
   'حجوزاتي': ['My bookings', 'Mes réservations', 'Mis reservas'],
   'خريطة المغرب': ['Map of Morocco', 'Carte du Maroc', 'Mapa de Marruecos'],
   'اللغة': ['Language', 'Langue', 'Idioma'],
+  'المفضلة': ['Favorites', 'Favoris', 'Favoritos'],
+  'وجهات مغربية تستحق الزيارة 🇲🇦\nاختر مكاناً وافتح موقعه على الخريطة.': ['Moroccan destinations worth visiting 🇲🇦\nChoose a place to open its map.', 'Des destinations marocaines à visiter 🇲🇦\nChoisissez un lieu pour ouvrir sa carte.', 'Destinos marroquíes que merecen una visita 🇲🇦\nElige un lugar para abrir su mapa.'],
+  'لا توجد أماكن مفضلة بعد': ['No saved places yet', 'Aucun lieu enregistré pour le moment', 'Aún no hay lugares guardados'],
+  'إزالة من المفضلة': ['Remove from favorites', 'Retirer des favoris', 'Quitar de favoritos'],
+  'تعذر حفظ التغيير. حاول مرة أخرى.': ['Could not save the change. Please try again.', 'Impossible d’enregistrer la modification. Veuillez réessayer.', 'No se pudo guardar el cambio. Inténtalo de nuevo.'],
+  'تعذر تحميل المفضلة. حاول مرة أخرى.': ['Could not load favorites. Please try again.', 'Impossible de charger les favoris. Veuillez réessayer.', 'No se pudieron cargar los favoritos. Inténtalo de nuevo.'],
+  'أزقة تاريخية وأسواق تقليدية، وهي جزء من التراث العالمي لليونسكو.': ['Historic alleys and traditional markets, part of the UNESCO World Heritage site.', 'Ruelles historiques et marchés traditionnels faisant partie du site du patrimoine mondial de l’UNESCO.', 'Callejuelas históricas y mercados tradicionales que forman parte del Patrimonio Mundial de la UNESCO.'],
+  'قصبة تاريخية وحديقة هادئة في قلب المدينة الزرقاء.': ['A historic kasbah and peaceful garden in the heart of the Blue City.', 'Une kasbah historique et un jardin paisible au cœur de la ville bleue.', 'Una kasbah histórica y un jardín tranquilo en el corazón de la ciudad azul.'],
+  'منطقة طبيعية معروفة بمياهها الجارية وإطلالاتها الجبلية.': ['A natural area known for its flowing water and mountain views.', 'Un site naturel connu pour ses eaux courantes et ses vues sur les montagnes.', 'Un paraje natural conocido por sus aguas corrientes y vistas a las montañas.'],
+  'مغارة ساحلية شهيرة قرب رأس سبارطيل.': ['A famous coastal cave near Cap Spartel.', 'Une célèbre grotte côtière près du cap Spartel.', 'Una famosa cueva costera cerca del cabo Espartel.'],
+  'منطقة ساحلية تطل على المحيط الأطلسي ومضيق جبل طارق.': ['A coastal area overlooking the Atlantic Ocean and the Strait of Gibraltar.', 'Un site côtier donnant sur l’océan Atlantique et le détroit de Gibraltar.', 'Una zona costera con vistas al océano Atlántico y al estrecho de Gibraltar.'],
+  'ساحة نابضة بالحياة قرب أسواق المدينة العتيقة.': ['A lively square near the old medina souks.', 'Une place animée près des souks de l’ancienne médina.', 'Una plaza animada cerca de los zocos de la medina antigua.'],
+  'معلمة تاريخية بارزة بجوار ضريح محمد الخامس.': ['A prominent historic landmark beside the Mausoleum of Mohammed V.', 'Un monument historique remarquable près du mausolée de Mohammed V.', 'Un monumento histórico destacado junto al mausoleo de Mohammed V.'],
+  'بوابة شهيرة تؤدي إلى أزقة فاس البالي التاريخية.': ['A famous gateway to the historic alleys of Fes el-Bali.', 'Une porte célèbre donnant accès aux ruelles historiques de Fès el-Bali.', 'Una puerta famosa que conduce a las callejuelas históricas de Fez el-Bali.'],
+  'موقع مرتفع يوفر إطلالة واسعة على مدينة أكادير والخليج.': ['A hilltop site offering wide views of Agadir and its bay.', 'Un site en hauteur offrant une vue panoramique sur Agadir et sa baie.', 'Un mirador elevado con amplias vistas de Agadir y su bahía.'],
+  'معلمة معمارية بارزة على ساحل المحيط الأطلسي.': ['A prominent architectural landmark on the Atlantic coast.', 'Un monument architectural remarquable sur la côte atlantique.', 'Un destacado monumento arquitectónico en la costa atlántica.'],
   'اكتشف المغرب معنا': ['Discover Morocco with us', 'Découvrez le Maroc avec nous', 'Descubre Marruecos con nosotros'],
   'رحلتك القادمة تبدأ من هنا': ['Your next journey starts here', 'Votre prochain voyage commence ici', 'Tu próximo viaje comienza aquí'],
   'من الشمال إلى الجنوب': ['From north to south', 'Du nord au sud', 'De norte a sur'],
@@ -98,7 +115,6 @@ const Map<String, List<String>> appTranslations = {
   'المدن الست مدرجة ضمن المواقع المرشحة في المغرب. الاختيار النهائي للملاعب والمدن لم يُحسم بعد من FIFA. السعات قيد التحقق.': ['This is general demo information. Live match or stadium-status data is not currently available.', 'Ces informations sont générales et données à titre de démonstration. Aucune donnée en direct sur les matchs ou l’état des stades n’est disponible.', 'Esta información es orientativa y de demostración. Actualmente no hay datos en directo sobre partidos o el estado de los estadios.'],
   'هذه مدينة وملعب مرشحان ضمن عملية التقييم. لا تعتبر هذه الصفحة إعلاناً عن ملعب مستضيف نهائي أو جدول مباريات.': ['Live matches and alerts will require an official schedule and results data source.', 'Les matchs et alertes en direct nécessiteront une source officielle pour les calendriers et les résultats.', 'Los partidos y avisos en directo requerirán una fuente oficial de horarios y resultados.'],
   'تعذر فتح الخرائط. تحقق من اتصال الإنترنت.': ['Could not open maps. Check your internet connection.', 'Impossible d’ouvrir les cartes. Vérifiez votre connexion Internet.', 'No se pudieron abrir los mapas. Comprueba tu conexión a Internet.'],
-  'وجهات مغربية تستحق الزيارة 🇲🇦\nاختر مكاناً وافتح موقعه على الخريطة.': ['Moroccan destinations worth visiting 🇲🇦\nChoose a place to view it on the map.', 'Des destinations marocaines à découvrir 🇲🇦\nChoisissez un lieu pour l’afficher sur la carte.', 'Destinos marroquíes que merecen una visita 🇲🇦\nElige un lugar para verlo en el mapa.'],
   'افتح على الخريطة': ['Open map', 'Ouvrir la carte', 'Abrir mapa'],
   'هذه اقتراحات تعريفية للزيارة. تحقق من أوقات العمل وشروط الدخول قبل التنقل.': ['These are suggested places to visit. Check opening hours and entry requirements before travelling.', 'Ces lieux sont proposés à titre indicatif. Vérifiez les horaires et les conditions d’accès avant de vous déplacer.', 'Estos son lugares sugeridos para visitar. Comprueba los horarios y las condiciones de acceso antes de desplazarte.'],
 };
@@ -394,6 +410,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           IconButton(
+            icon: const Icon(Icons.favorite_outline),
+            tooltip: tr('المفضلة'),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen())),
+          ),
+          IconButton(
             icon: Icon(Icons.confirmation_number_outlined),
             tooltip: tr('حجوزاتي'),
             onPressed: () => Navigator.push(
@@ -617,7 +638,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
                 onPressed: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const RoutePlannerScreen()),
+                  MaterialPageRoute(builder: (_) => RoutePlannerScreen(language: appLanguage.value)),
                 ),
               ),
             ),
@@ -907,8 +928,132 @@ const List<TouristPlace> touristPlaces = [
   ),
 ];
 
-class DiscoverScreen extends StatelessWidget {
+
+class FavoritesScreen extends StatefulWidget {
+  const FavoritesScreen({super.key});
+  @override
+  State<FavoritesScreen> createState() => _FavoritesScreenState();
+}
+
+class _FavoritesScreenState extends State<FavoritesScreen> {
+  late Future<List<String>> _future;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = FavoritesService.getFavorites();
+  }
+
+  Future<void> _remove(String name) async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    var saved = false;
+    try {
+      saved = await FavoritesService.toggleFavorite(name);
+    } catch (_) {
+      saved = false;
+    }
+    if (!saved && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('تعذر حفظ التغيير. حاول مرة أخرى.'))),
+      );
+    }
+    if (mounted) {
+      setState(() {
+        _future = saved
+            ? FavoritesService.getFavorites()
+            : FavoritesService.reloadFavorites();
+        _saving = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: Text(tr('المفضلة'))),
+    body: FutureBuilder<List<String>>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text(tr('تعذر تحميل المفضلة. حاول مرة أخرى.')));
+        }
+        final saved = snapshot.data ?? <String>[];
+        final places = touristPlaces.where((p) => saved.contains(p.name)).toList();
+        if (places.isEmpty) {
+          return Center(child: Text(tr('لا توجد أماكن مفضلة بعد')));
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: places.length,
+          itemBuilder: (context, index) {
+            final place = places[index];
+            return Card(
+              child: ListTile(
+                title: Text(tr(place.name)),
+                subtitle: Text('${cityLabel(place.city)} • ${tr(place.description)}'),
+                trailing: IconButton(
+                  tooltip: tr('إزالة من المفضلة'),
+                  icon: const Icon(Icons.favorite, color: primaryRed),
+                  onPressed: _saving ? null : () => _remove(place.name),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    ),
+  );
+}
+
+class DiscoverScreen extends StatefulWidget {
   const DiscoverScreen({super.key});
+  @override
+  State<DiscoverScreen> createState() => _DiscoverScreenState();
+}
+
+class _DiscoverScreenState extends State<DiscoverScreen> {
+  Set<String> _favorites = <String>{};
+  @override
+  void initState() { super.initState(); _loadFavorites(); }
+  bool _savingFavorite = false;
+
+  Future<bool> _loadFavorites({bool reload = false}) async {
+    try {
+      final names = reload
+          ? await FavoritesService.reloadFavorites()
+          : await FavoritesService.getFavorites();
+      if (mounted) setState(() => _favorites = names.toSet());
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> _toggleFavorite(TouristPlace place) async {
+    if (_savingFavorite) return;
+    setState(() => _savingFavorite = true);
+    var saved = false;
+    var refreshed = false;
+    try {
+      try {
+        saved = await FavoritesService.toggleFavorite(place.name);
+      } catch (_) {
+        saved = false;
+      }
+      refreshed = await _loadFavorites(reload: !saved);
+      if ((!saved || !refreshed) && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(tr('تعذر حفظ التغيير. حاول مرة أخرى.'))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _savingFavorite = false);
+    }
+  }
 
   Future<void> _openMap(BuildContext context, TouristPlace place) async {
     final query = Uri.encodeComponent('${place.name} ${place.city} المغرب');
@@ -916,7 +1061,7 @@ class DiscoverScreen extends StatelessWidget {
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!opened && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('تعذر فتح الخرائط. تحقق من اتصال الإنترنت.')),
+        SnackBar(content: Text(tr('تعذر فتح الخرائط. تحقق من اتصال الإنترنت.'))),
       );
     }
   }
@@ -924,7 +1069,7 @@ class DiscoverScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(tr('اكتشف المغرب'))),
+      appBar: AppBar(title: Text(tr('اكتشف المغرب')), actions: [IconButton(tooltip: tr('المفضلة'), icon: const Icon(Icons.favorite_outline), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen())).then((_) => _loadFavorites()))]),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -935,7 +1080,7 @@ class DiscoverScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(18),
             ),
             child: Text(
-              'وجهات مغربية تستحق الزيارة 🇲🇦\nاختر مكاناً وافتح موقعه على الخريطة.',
+              tr('وجهات مغربية تستحق الزيارة 🇲🇦\nاختر مكاناً وافتح موقعه على الخريطة.'),
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 17,
@@ -953,21 +1098,20 @@ class DiscoverScreen extends StatelessWidget {
                     backgroundColor: Color(0xFFFFEBEE),
                     child: Icon(Icons.place, color: primaryRed),
                   ),
-                  title: Text(place.name,
+                  title: Text(tr(place.name),
                       style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('${place.city} • ${place.description}'),
+                  subtitle: Text('${cityLabel(place.city)} • ${tr(place.description)}'),
                   isThreeLine: true,
-                  trailing: IconButton(
-                    tooltip: 'افتح على الخريطة',
-                    icon: Icon(Icons.map_outlined, color: primaryRed),
-                    onPressed: () => _openMap(context, place),
-                  ),
+                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                    IconButton(tooltip: tr('المفضلة'), icon: Icon(_favorites.contains(place.name) ? Icons.favorite : Icons.favorite_border, color: primaryRed), onPressed: _savingFavorite ? null : () => _toggleFavorite(place)),
+                    IconButton(tooltip: tr('افتح على الخريطة'), icon: const Icon(Icons.map_outlined, color: primaryRed), onPressed: () => _openMap(context, place)),
+                  ]),
                   onTap: () => _openMap(context, place),
                 ),
               )),
           SizedBox(height: 8),
           Text(
-            'هذه اقتراحات تعريفية للزيارة. تحقق من أوقات العمل وشروط الدخول قبل التنقل.',
+            tr('هذه اقتراحات تعريفية للزيارة. تحقق من أوقات العمل وشروط الدخول قبل التنقل.'),
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey, fontSize: 12),
           ),
