@@ -281,6 +281,28 @@ jobs:
           path: build/web/
           if-no-files-found: error
 
+      - name: Smoke-test web build in Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m venv .venv
+          .venv/bin/python -m pip install --disable-pip-version-check playwright==1.56.0
+          # GitHub-hosted Ubuntu runners already provide Chromium's system libraries.
+          # Avoid apt-based --with-deps here: transient Ubuntu mirror/DNS failures
+          # must not block the browser smoke test after the app has built successfully.
+          .venv/bin/python -m playwright install chromium
+          python3 -m http.server 4173 --directory build/web > /tmp/sirsir-web-server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:4173/ >/dev/null
+          .venv/bin/python e2e/web_smoke.py
+
 
       # Enable KVM on this ephemeral GitHub-hosted runner to avoid slow software-only emulator boot.
       - name: Enable KVM for Android emulator
