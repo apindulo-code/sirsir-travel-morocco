@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - firestore.rules
+      - firebase.json
   workflow_dispatch:
 
 permissions:
