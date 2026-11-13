@@ -76,3 +76,12 @@
 رابط التشغيل: https://github.com/apindulo-code/sirsir-travel-morocco/actions/workflows/firebase-deploy-rules.yml
 
 هذا الـWorkflow لا ينشر Hosting أو Storage، ولا يفعّل الفوترة، ولا يرسل SMS. لا تعتبر عملية النشر مكتملة حتى يظهر تشغيل أخضر ناجح في GitHub Actions.
+
+
+## تحديث التوزيع المحدود — 13 نوفمبر 2026
+
+- اسم الحزمة المسجل لدى Android Developer Console: `ma.sirsirtravel.morocco.limited`.
+- اسم الحزمة السابق في إعداد Firebase والنسخ المبنية سابقاً: `ma.sirsirtravel.morocco`؛ يبقى محفوظاً ولا يُحذف.
+- قبل اعتماد APK الجديد، أضف تطبيق Android ثانياً داخل مشروع Firebase `sirsir-travel-morocco` بالاسم الدقيق `ma.sirsirtravel.morocco.limited`، وأضف بصمتي SHA-1 وSHA-256 لشهادة التوقيع نفسها.
+- بعد إنشاء التطبيق الجديد، استخرج قيمة `appId` الخاصة به وحدّث حقل `appId` داخل كتلة `android` في `lib/firebase_options.dart`. لا تغيّر إعدادات Web.
+- اختبر تسجيل الدخول بالبريد والهاتف وFirestore على جهاز حقيقي بعد هذا التحديث. لا يُعد تسجيل اسم الحزمة في Android Developer Console بديلاً عن تسجيل تطبيق Android المقابل في Firebase.
