@@ -38,7 +38,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          package_id = 'ma.sirsirtravel.morocco'
+          package_id = 'ma.sirsirtravel.morocco.limited'
           gradle_files = [Path('android/app/build.gradle.kts'), Path('android/app/build.gradle')]
           gradle = next((p for p in gradle_files if p.exists()), None)
           if gradle is None:
@@ -338,7 +338,7 @@ jobs:
           timeout 30s adb logcat -d -t 1500 > build/emulator-diagnostics/logcat.txt 2>&1 || true
           timeout 20s adb shell getprop > build/emulator-diagnostics/getprop.txt 2>&1 || true
           timeout 20s adb shell dumpsys activity activities > build/emulator-diagnostics/activities.txt 2>&1 || true
-          timeout 20s adb shell dumpsys package ma.sirsirtravel.morocco > build/emulator-diagnostics/package.txt 2>&1 || true
+          timeout 20s adb shell dumpsys package ma.sirsirtravel.morocco.limited > build/emulator-diagnostics/package.txt 2>&1 || true
 
       - name: Upload emulator diagnostics
         if: ${{ always() && steps.emulator_smoke.outcome == 'failure' }}

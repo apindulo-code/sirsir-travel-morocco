@@ -18,7 +18,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBrST6rzKIqD5bHySLPTeBL84Wo-RMQZQE',
-    appId: '1:881046533648:android:3747754613450c773a7c95',
+    appId: '1:881046533648:android:121caf2be99a8a063a7c95',
     messagingSenderId: '881046533648',
     projectId: 'sirsir-travel-morocco',
     storageBucket: 'sirsir-travel-morocco.firebasestorage.app',

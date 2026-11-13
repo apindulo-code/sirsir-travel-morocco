@@ -264,7 +264,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
               children: [
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'ma.sirsirtravel.morocco',
+                  userAgentPackageName: 'ma.sirsirtravel.morocco.limited',
                 ),
                 if (_route.isNotEmpty)
                   PolylineLayer(
