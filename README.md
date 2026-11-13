@@ -53,7 +53,7 @@ flutter build web --release
 
 ## إعداد Firebase قبل تفعيل الحسابات السحابية
 
-1. تأكد من أن مشروع Firebase هو `sirsir-travel-morocco` وأن تطبيق Android مسجل بمعرف الحزمة `ma.sirsirtravel.morocco`.
+1. مع نسخة التوزيع المحدود، يجب أن يكون تطبيق Android مسجلاً في Firebase بمعرف الحزمة `ma.sirsirtravel.morocco.limited`؛ التسجيل القديم `ma.sirsirtravel.morocco` محفوظ ولا يُحذف. أضف تطبيق Android جديداً في مشروع Firebase نفسه قبل اعتماد النسخة الجديدة، ثم حدّث `lib/firebase_options.dart` بمعرّف تطبيق Android الجديد.
 2. فعّل Email/Password وPhone من Firebase Authentication.
 3. أضف بصمات SHA-1 وSHA-256 لتطبيق Android لاستخدام التحقق الهاتفي.
 4. أنشئ قاعدة Firestore وانشر `firestore.rules` و`firestore.indexes.json`.
