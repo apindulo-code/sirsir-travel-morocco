@@ -34,8 +34,10 @@
 
 - [x] تأكيد رسالة Google بنجاح تسجيل `ma.sirsirtravel.morocco.limited` باسم `SirSir Travel Morocco Limited`.
 - [x] تأكيد بصمة SHA-256 المسجلة: `1A:B0:EF:69:E5:EB:AA:5B:7A:3A:D6:84:53:4A:B5:07:3D:08:1F:FA:82:1A:6B:36:07:BA:F5:BA:0B:94:8F:FA`.
-- [ ] تسجيل تطبيق Android ثانٍ في Firebase بالمعرف `ma.sirsirtravel.morocco.limited` وإضافة بصمات الشهادة إليه.
-- [ ] تحديث `appId` في `lib/firebase_options.dart` من تسجيل Firebase الجديد، ثم اختبار Email/Password وPhone وFirestore.
+- [x] تسجيل تطبيق Android ثانٍ في Firebase بالمعرف `ma.sirsirtravel.morocco.limited` (Firebase App ID: `1:881046533648:android:121caf2be99a8a063a7c95`).
+- [x] تحديث `appId` في كتلة Android داخل `lib/firebase_options.dart` على فرع التوزيع المحدود، مع إبقاء إعداد Web كما هو.
+- [ ] إضافة SHA-1 وSHA-256 إلى تطبيق Firebase الجديد؛ محاولة إضافة SHA-256 لم تُحفظ بسبب تعذر إدخالها في واجهة Firebase.
+- [ ] اختبار Email/Password وPhone وFirestore على جهاز حقيقي بعد إضافة البصمات.
 - [ ] بناء APK جديد والتحقق من Manifest وبصمة شهادة التوقيع ومطابقتها مع Android Developer Console.
 - [ ] تفويض أجهزة الاختبار في Android Developer Console قبل محاولة تثبيت النسخة عليها.
 
