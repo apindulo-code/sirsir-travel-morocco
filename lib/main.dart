@@ -1149,7 +1149,7 @@ class MoroccoMapScreen extends StatelessWidget {
               children: [
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'ma.sirsirtravel.morocco',
+                  userAgentPackageName: 'ma.sirsirtravel.morocco.limited',
                 ),
                 MarkerLayer(
                   markers: touristPlaces.map((place) => Marker(
