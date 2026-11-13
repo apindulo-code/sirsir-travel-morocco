@@ -4,7 +4,8 @@
 
 - مشروع Firebase: `sirsir-travel-morocco`.
 - رقم المشروع: `881046533648`.
-- تطبيق Android: `ma.sirsirtravel.morocco`.
+- تطبيق Android القديم: `ma.sirsirtravel.morocco` (محفوظ دون تغيير).
+- تطبيق Android الجديد للتوزيع المحدود: `ma.sirsirtravel.morocco.limited`، Firebase App ID: `1:881046533648:android:121caf2be99a8a063a7c95`.
 - تطبيق Web: `SirSir Travel Morocco Web`.
 - إعدادات Android وWeb موجودة في `lib/firebase_options.dart` ويختار التطبيق إعداد المنصة تلقائياً.
 - Cloud Firestore: قاعدة `(default)` في `europe-west1`، وضع الإنتاج.
@@ -80,8 +81,9 @@
 
 ## تحديث التوزيع المحدود — 13 نوفمبر 2026
 
-- اسم الحزمة المسجل لدى Android Developer Console: `ma.sirsirtravel.morocco.limited`.
-- اسم الحزمة السابق في إعداد Firebase والنسخ المبنية سابقاً: `ma.sirsirtravel.morocco`؛ يبقى محفوظاً ولا يُحذف.
-- قبل اعتماد APK الجديد، أضف تطبيق Android ثانياً داخل مشروع Firebase `sirsir-travel-morocco` بالاسم الدقيق `ma.sirsirtravel.morocco.limited`، وأضف بصمتي SHA-1 وSHA-256 لشهادة التوقيع نفسها.
-- بعد إنشاء التطبيق الجديد، استخرج قيمة `appId` الخاصة به وحدّث حقل `appId` داخل كتلة `android` في `lib/firebase_options.dart`. لا تغيّر إعدادات Web.
-- اختبر تسجيل الدخول بالبريد والهاتف وFirestore على جهاز حقيقي بعد هذا التحديث. لا يُعد تسجيل اسم الحزمة في Android Developer Console بديلاً عن تسجيل تطبيق Android المقابل في Firebase.
+- تم تسجيل `ma.sirsirtravel.morocco.limited` لدى Android Developer Console.
+- تم إنشاء تطبيق Android ثانٍ في Firebase بالاسم `SirSir Travel Morocco Limited` والحزمة `ma.sirsirtravel.morocco.limited`، ومعرفه `1:881046533648:android:121caf2be99a8a063a7c95`.
+- تم تحديث `lib/firebase_options.dart` على فرع التوزيع المحدود إلى Firebase App ID الجديد؛ إعداد Web لم يتغير.
+- **بصمة SHA-256 لم تُضف بعد إلى التطبيق الجديد في Firebase.** تمت محاولة إضافتها عبر وحدة التحكم، لكن حقل الإدخال لم يقبل القيمة ولم يظهر تأكيد الحفظ. البصمة المطلوبة هي `1A:B0:EF:69:E5:EB:AA:5B:7A:3A:D6:84:53:4A:B5:07:3D:08:1F:FA:82:1A:6B:36:07:BA:F5:BA:0B:94:8F:FA`.
+- وثيقة إعداد Firebase تحتوي بالفعل على بصمة SHA-1 لشهادة الرفع نفسها: `E1:3C:27:E4:67:AB:01:81:EE:75:C6:94:4F:83:6C:80:BE:FB:ED:72`. يجب إضافتها إلى التطبيق الجديد أيضاً إذا كانت غير موجودة.
+- لا تعتمد APK النهائي قبل إضافة البصمات إلى التطبيق الجديد واختبار Email/Password وPhone وFirestore على جهاز حقيقي. التطبيق القديم وإعدادات Web لم تتغير.
