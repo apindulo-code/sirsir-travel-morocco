@@ -49,16 +49,14 @@ jobs:
           
           // Match each Flutter plugin Kotlin target to its own Android Java task.
           subprojects {
-              afterEvaluate {
-                  val javaCompileTasks = tasks
-                  tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-                      val javaTaskName = name.replace("Kotlin", "JavaWithJavac")
-                      val javaCompileTask = javaCompileTasks.named<org.gradle.api.tasks.compile.JavaCompile>(javaTaskName)
-                      compilerOptions {
-                          jvmTarget.set(javaCompileTask.map {
-                              org.jetbrains.kotlin.gradle.dsl.JvmTarget.fromTarget(it.targetCompatibility)
-                          })
-                      }
+              val javaCompileTasks = tasks
+              tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+                  val javaTaskName = name.replace("Kotlin", "JavaWithJavac")
+                  val javaCompileTask = javaCompileTasks.named<org.gradle.api.tasks.compile.JavaCompile>(javaTaskName)
+                  compilerOptions {
+                      jvmTarget.set(javaCompileTask.map {
+                          org.jetbrains.kotlin.gradle.dsl.JvmTarget.fromTarget(it.targetCompatibility)
+                      })
                   }
               }
           }
