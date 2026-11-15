@@ -24,6 +24,8 @@ class WidgetDataService {
     required String wind,
     required String updatedAt,
   }) async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+
     try {
       await HomeWidget.saveWidgetData<String>('weather_city', city);
       await HomeWidget.saveWidgetData<String>(
@@ -40,7 +42,7 @@ class WidgetDataService {
         updatedAt,
       );
 
-      await HomeWidget.updateWidget(androidName: _providerName);
+      await HomeWidget.updateWidget(name: _providerName);
     } catch (error, stackTrace) {
       // Widget failures must never interrupt the main weather dashboard.
       debugPrint('SirSir widget update failed: $error');
