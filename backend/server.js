@@ -6,7 +6,7 @@ import { applicationDefault, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 
 const PORT = Number.parseInt(process.env.PORT || "8080", 10);
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 const GEMINI_TIMEOUT_MS = Number.parseInt(process.env.GEMINI_TIMEOUT_MS || "30000", 10);
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "";
 const MAX_MESSAGE_CHARS = 2000;
