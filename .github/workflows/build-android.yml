@@ -65,7 +65,7 @@ jobs:
           # Some Flutter plugins set Java 8 after project configuration. Re-apply
           # both Java and Kotlin targets after every Android subproject is evaluated.
           gradle.projectsEvaluated {
-              allprojects {
+              rootProject.allprojects {
                   tasks.withType<org.gradle.api.tasks.compile.JavaCompile>().configureEach {
                       sourceCompatibility = "17"
                       targetCompatibility = "17"
