@@ -47,29 +47,17 @@ jobs:
           source = gradle.read_text()
           alignment = """
           
-          // Keep Flutter plugins and the app on a compatible JVM bytecode target.
+          // Match each Flutter plugin Kotlin target to its own Android Java task.
           subprojects {
-              tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-                  compilerOptions {
-                      jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-                  }
-              }
-              tasks.withType<org.gradle.api.tasks.compile.JavaCompile>().configureEach {
-                  sourceCompatibility = "17"
-                  targetCompatibility = "17"
-              }
-          }
-          
-          // Re-apply after plugins configure their Java compile tasks.
-          gradle.projectsEvaluated {
-              rootProject.allprojects {
-                  tasks.withType<org.gradle.api.tasks.compile.JavaCompile>().configureEach {
-                      sourceCompatibility = "17"
-                      targetCompatibility = "17"
-                  }
+              afterEvaluate {
+                  val javaCompileTasks = tasks
                   tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+                      val javaTaskName = name.replace("Kotlin", "JavaWithJavac")
+                      val javaCompileTask = javaCompileTasks.named<org.gradle.api.tasks.compile.JavaCompile>(javaTaskName)
                       compilerOptions {
-                          jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+                          jvmTarget.set(javaCompileTask.map {
+                              org.jetbrains.kotlin.gradle.dsl.JvmTarget.fromTarget(it.targetCompatibility)
+                          })
                       }
                   }
               }
@@ -77,7 +65,7 @@ jobs:
           """
           if "kotlinOptions.jvmTarget = \"11\"" not in source:
               gradle.write_text(source.rstrip() + alignment)
-          print("Configured all Android Java and Kotlin compile tasks to target JVM 17 after project evaluation.")
+          print("Configured each Android plugin Kotlin task to match its corresponding Java task target.")
           PY
 
       - name: Configure Android package ID, launcher and permissions
