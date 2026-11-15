@@ -34,6 +34,13 @@ jobs:
       - name: Generate Flutter platform files
         run: flutter create --platforms=android,web --project-name=sirsir_travel_morocco .
 
+      - name: Install Android API 37 required by AndroidX Glance
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platforms;android-37"
+
+
       - name: Align Android Kotlin bytecode targets for native plugins
         shell: bash
         run: |
@@ -73,7 +80,7 @@ jobs:
           if gradle is None:
               raise SystemExit('Android app Gradle file not found')
           lines = gradle.read_text().splitlines()
-          found_namespace = found_application_id = False
+          found_namespace = found_application_id = found_compile_sdk = False
           for index, line in enumerate(lines):
               if line.strip().startswith('namespace ='):
                   lines[index] = f'    namespace = "{package_id}"'
@@ -81,8 +88,11 @@ jobs:
               elif line.strip().startswith('applicationId ='):
                   lines[index] = f'        applicationId = "{package_id}"'
                   found_application_id = True
-          if not found_namespace or not found_application_id:
-              raise SystemExit(f'Could not safely set Android package ID (namespace={found_namespace}, applicationId={found_application_id})')
+              elif line.strip().startswith('compileSdk =') or line.strip().startswith('compileSdkVersion'):
+                  lines[index] = '    compileSdk = 37' if gradle.suffix == '.kts' else '    compileSdkVersion 37'
+                  found_compile_sdk = True
+          if not found_namespace or not found_application_id or not found_compile_sdk:
+              raise SystemExit(f'Could not safely configure Android package and compile SDK (namespace={found_namespace}, applicationId={found_application_id}, compileSdk={found_compile_sdk})')
           gradle.write_text('\n'.join(lines) + '\n')
 
           # Android resolves ".MainActivity" against the Gradle namespace.
