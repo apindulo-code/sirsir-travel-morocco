@@ -7,7 +7,7 @@ This service implements the Flutter contract at `POST /api/chat`. It keeps the G
 Copy `.env.example` to `.env` for local development and set:
 
 - `GEMINI_API_KEY`: secret Gemini key; server-side only.
-- `GEMINI_MODEL=gemini-2.0-flash`
+- `GEMINI_MODEL=gemini-3.8-flash` (the requested Gemini 2.0 Flash was shut down on 1 June 2026)
 - `ALLOWED_ORIGIN`: one exact browser origin, e.g. `https://app.example.com`. Native Flutter requests without an Origin header are accepted but still require Firebase authentication.
 - `PORT=8080`
 - `GEMINI_TIMEOUT_MS=30000`
