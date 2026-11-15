@@ -90,19 +90,7 @@ jobs:
           if not found_namespace or not found_application_id or not found_compile_sdk:
               raise SystemExit(f'Could not safely configure Android package and compile SDK (namespace={found_namespace}, applicationId={found_application_id}, compileSdk={found_compile_sdk})')
           gradle.write_text('\n'.join(lines) + '\n')
-          # Pin stable Glance 1.2.0 to avoid the API-37-only alpha dependency.
-          source = gradle.read_text()
-          if 'androidx.glance:glance-appwidget:1.2.0' not in source:
-              force_block = '''
-          configurations.configureEach {
-              resolutionStrategy.force(
-                  "androidx.glance:glance:1.2.0",
-                  "androidx.glance:glance-appwidget:1.2.0"
-              )
-          }
-          '''
-              source += '\n' + force_block
-              gradle.write_text(source)
+
 
 
           # Android resolves ".MainActivity" against the Gradle namespace.
@@ -150,6 +138,33 @@ jobs:
           print('Android app label set to SirSir Travel Morocco')
           PY
 
+      - name: Pin AndroidX Glance to stable 1.2.0 across all Android modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          gradle = Path('android/build.gradle.kts')
+          if not gradle.exists():
+              raise SystemExit('Generated root android/build.gradle.kts not found')
+          source = gradle.read_text()
+          marker = 'resolutionStrategy.force('
+          if marker not in source:
+              source += '''
+
+          // Force the stable Glance release for every Android plugin and app configuration.
+          allprojects {
+              configurations.configureEach {
+                  resolutionStrategy.force(
+                      "androidx.glance:glance:1.2.0",
+                      "androidx.glance:glance-appwidget:1.2.0"
+                  )
+              }
+          }
+          '''
+              gradle.write_text(source)
+          print('Pinned Glance 1.2.0 in the root Gradle project for all Android modules.')
+          PY
       - name: Install native widget and background-work sources
         shell: bash
         run: |
