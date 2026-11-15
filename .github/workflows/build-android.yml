@@ -34,6 +34,31 @@ jobs:
       - name: Generate Flutter platform files
         run: flutter create --platforms=android,web --project-name=sirsir_travel_morocco .
 
+      - name: Align Android Kotlin bytecode targets for native plugins
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          gradle = Path("android/build.gradle.kts")
+          if not gradle.exists():
+              raise SystemExit("Expected generated root Android Kotlin DSL build file")
+          source = gradle.read_text()
+          alignment = """
+          
+          // Keep Flutter plugins and the app on a compatible JVM bytecode target.
+          subprojects {
+              tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+                  kotlinOptions.jvmTarget = "11"
+              }
+          }
+          """
+          if "kotlinOptions.jvmTarget = \"11\"" not in source:
+              gradle.write_text(source.rstrip() + alignment)
+          print("Configured all Android Kotlin compile tasks to target JVM 11.")
+          PY
+
       - name: Configure Android package ID, launcher and permissions
         run: |
           python - <<'PY'
