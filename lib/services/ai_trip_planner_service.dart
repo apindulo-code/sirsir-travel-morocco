@@ -42,6 +42,7 @@ class AiTripPlannerService {
     final uri = Uri.tryParse(_endpoint);
     if (uri == null ||
         !uri.hasAuthority ||
+        uri.userInfo.isNotEmpty ||
         !(uri.scheme == 'https' ||
             (!kReleaseMode &&
                 uri.scheme == 'http' &&
@@ -89,11 +90,12 @@ class AiTripPlannerService {
           .timeout(timeout);
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw AiTripPlannerException(
-          response.statusCode == 429
-              ? 'الخدمة مشغولة حالياً. حاول بعد قليل.'
-              : 'تعذر الحصول على إجابة من المرشد الذكي حالياً.',
-        );
+        final message = switch (response.statusCode) {
+          401 || 403 => 'انتهت صلاحية الدخول أو لا تملك إذناً لاستخدام الخدمة. سجل الدخول مجدداً.',
+          429 => 'الخدمة مشغولة حالياً. حاول بعد قليل.',
+          _ => 'تعذر الحصول على إجابة من المرشد الذكي حالياً.',
+        };
+        throw AiTripPlannerException(message);
       }
 
       final decoded = jsonDecode(utf8.decode(response.bodyBytes));
