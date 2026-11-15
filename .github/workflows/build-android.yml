@@ -95,54 +95,69 @@ jobs:
               )
           if label_count != 1:
               raise SystemExit('Could not safely set Android application label')
-          permissions = '    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n'
+          permissions = '    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n'
           source = source.replace('    <application', permissions + '    <application', 1)
           manifest.write_text(source)
           print('Android app label set to SirSir Travel Morocco')
           PY
 
-      - name: Install native weather widget sources
+      - name: Install native widget and background-work sources
         shell: bash
         run: |
           set -euo pipefail
           package_path="ma/sirsirtravel/morocco/limited"
           kotlin_dir="android/app/src/main/kotlin/${package_path}"
           mkdir -p "${kotlin_dir}" android/app/src/main/res/layout android/app/src/main/res/xml android/app/src/main/res/drawable
-          cp tool/android_widget/TravelWeatherWidgetProvider.kt "${kotlin_dir}/TravelWeatherWidgetProvider.kt"
-          cp tool/android_widget/widget_weather.xml android/app/src/main/res/layout/widget_weather.xml
-          cp tool/android_widget/widget_weather_info.xml android/app/src/main/res/xml/widget_weather_info.xml
+          cp tool/android_widget/TravelWidgetProvider.kt "${kotlin_dir}/TravelWidgetProvider.kt"
+          cp tool/android_widget/widget_travel.xml android/app/src/main/res/layout/widget_travel.xml
+          cp tool/android_widget/widget_travel_info.xml android/app/src/main/res/xml/widget_travel_info.xml
           cp tool/android_widget/widget_weather_background.xml android/app/src/main/res/drawable/widget_weather_background.xml
 
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           manifest = Path("android/app/src/main/AndroidManifest.xml")
           source = manifest.read_text()
-          receiver_name = "ma.sirsirtravel.morocco.limited.TravelWeatherWidgetProvider"
+          if "android.permission.RECEIVE_BOOT_COMPLETED" not in source:
+              source = source.replace(
+                  "    <application",
+                  '    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\\n    <application',
+                  1,
+              )
+
+          # WorkManager's library manifest already registers reboot rescheduling.
+          receiver_name = "ma.sirsirtravel.morocco.limited.TravelWidgetProvider"
           if receiver_name not in source:
               receiver = """
                   <receiver
-                      android:name="ma.sirsirtravel.morocco.limited.TravelWeatherWidgetProvider"
+                      android:name="ma.sirsirtravel.morocco.limited.TravelWidgetProvider"
                       android:exported="true"
-                      android:label="SirSir Weather">
+                      android:label="SirSir Travel Weather">
                       <intent-filter>
                           <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                       </intent-filter>
                       <meta-data
                           android:name="android.appwidget.provider"
-                          android:resource="@xml/widget_weather_info" />
+                          android:resource="@xml/widget_travel_info" />
                   </receiver>
               """
               if "</application>" not in source:
                   raise SystemExit("AndroidManifest.xml has no application closing tag")
-              source = source.replace("</application>", receiver + "\n    </application>", 1)
-              manifest.write_text(source)
-          print("Registered SirSir weather App Widget receiver.")
-          PY
+              source = source.replace("</application>", receiver + "\\n    </application>", 1)
 
-          test -f "${kotlin_dir}/TravelWeatherWidgetProvider.kt"
-          test -f android/app/src/main/res/layout/widget_weather.xml
-          test -f android/app/src/main/res/xml/widget_weather_info.xml
+          # share_plus supplies its own FileProvider via manifest merge. Never add
+          # another app-level provider or authority here.
+          providers = re.findall(r'<provider\\b[^>]*android:name=["\\']([^"\\']+)', source)
+          if any("FileProvider" in name for name in providers):
+              raise SystemExit("App manifest already declares a FileProvider; resolve before merging share_plus")
+
+          manifest.write_text(source)
+          print("Widget registered; WorkManager boot receiver and share_plus FileProvider are delegated to plugin manifests.")
+          PY
+          test -f "${kotlin_dir}/TravelWidgetProvider.kt"
+          test -f android/app/src/main/res/layout/widget_travel.xml
+          test -f android/app/src/main/res/xml/widget_travel_info.xml
 
       - name: Configure Android upload signing (only when secrets are configured)
         env:

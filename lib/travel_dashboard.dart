@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'services/widget_data_service.dart';
+import 'services/file_storage_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/travel_news_service.dart';
 import 'package:geolocator/geolocator.dart';
@@ -352,6 +353,30 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
     );
   }
 
+  Future<void> _shareWeatherReport(Map<String, dynamic> current) async {
+    final report = [
+      'SirSir Travel Morocco - Weather report',
+      'City: $city',
+      'Temperature: ${current['temperature_2m'] ?? '--'} °C',
+      'Condition: ${_weatherName(current['weather_code'])}',
+      'Wind: ${current['wind_speed_10m'] ?? '--'} km/h',
+      'Humidity: ${current['relative_humidity_2m'] ?? '--'}%',
+      'Precipitation: ${current['precipitation'] ?? '--'} mm',
+      'Updated: ${dataUpdatedAt?.toLocal() ?? DateTime.now().toLocal()}',
+      '',
+      'Indicative weather information. Check official local alerts before travelling.',
+    ].join('\\n');
+    try {
+      await FileStorageService.saveAndShareText(
+        fileName: 'sirsir-weather-${DateTime.now().millisecondsSinceEpoch}.txt',
+        contents: report,
+        subject: 'SirSir Travel Morocco - Weather',
+      );
+    } catch (error) {
+      _msg('تعذر حفظ أو مشاركة التقرير: $error');
+    }
+  }
+
   void _msg(String s){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(s)));}
   String _weatherName(dynamic v){final c=(v as num?)?.toInt()??-1;if(c==0)return'صحو';if(c<=3&&c>=1)return'غائم';if(c==45||c==48)return'ضباب';if(c>=51&&c<=67)return'رذاذ أو أمطار';if(c>=71&&c<=86)return'ثلوج';if(c>=95)return'عواصف رعدية';return'متغير';}
   String _advice(Map<String,dynamic> c){final w=(c['wind_speed_10m'] as num?)?.toDouble()??0;final rain=(c['precipitation'] as num?)?.toDouble()??0;final code=(c['weather_code'] as num?)?.toInt()??0;if(w>=55||code>=95)return'تنبيه: قد تؤثر الظروف الجوية على السفر. راجع النشرات الرسمية.';if(w>=35||rain>=2||[61,63,65,80,81,82].contains(code))return'الحذر مستحسن: تحقق من الطقس والطرق قبل الانطلاق.';return'المؤشرات الجوية تبدو ملائمة مبدئياً؛ تابع تحديثات الطريق.';}
@@ -415,7 +440,16 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
       if(error!=null)Card(child:Padding(padding:const EdgeInsets.all(12),child:Text(error!))),
       if(c!=null&&!loading)...[
         Card(child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-          const Text('الطقس الآن',style:TextStyle(fontWeight:FontWeight.bold,fontSize:17)),
+          Row(
+            children: [
+              const Expanded(child: Text('الطقس الآن', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17))),
+              IconButton(
+                tooltip: 'حفظ ومشاركة تقرير الطقس',
+                onPressed: () => _shareWeatherReport(c),
+                icon: const Icon(Icons.share_outlined),
+              ),
+            ],
+          ),
           Row(children:[const Icon(Icons.cloud,size:40,color:Colors.blue),Text(' ${(c['temperature_2m'] as num?)?.round()??'--'}°',style:const TextStyle(fontSize:30,fontWeight:FontWeight.bold)),const SizedBox(width:10),Text(_weatherName(c['weather_code']))]),
           Wrap(spacing:8,children:[Chip(label:Text('الرياح ${c['wind_speed_10m']} كم/س')),Chip(label:Text('الرطوبة ${c['relative_humidity_2m']}%')),Chip(label:Text('الأمطار ${c['precipitation']} مم')),Chip(label:Text('الضغط ${(c['pressure_msl'] as num?)?.round()??'--'} hPa'))]),
           Text(_advice(c),style:const TextStyle(fontWeight:FontWeight.w600)),

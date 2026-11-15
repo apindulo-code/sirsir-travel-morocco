@@ -5,6 +5,6 @@
     android:minResizeWidth="160dp"
     android:minResizeHeight="120dp"
     android:updatePeriodMillis="0"
-    android:initialLayout="@layout/widget_weather"
+    android:initialLayout="@layout/widget_travel"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen" />

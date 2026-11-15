@@ -5,7 +5,7 @@ import 'package:home_widget/home_widget.dart';
 /// This service deliberately does not fetch data: TravelDashboard remains the
 /// single source of truth for weather, avoiding duplicate API requests.
 class WidgetDataService {
-  static const String _providerName = 'TravelWeatherWidgetProvider';
+  static const String _providerName = 'TravelWidgetProvider';
 
   static String formatTemperature(num? value) {
     if (value == null) return '--°C';
