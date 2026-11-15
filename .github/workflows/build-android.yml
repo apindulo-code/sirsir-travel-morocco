@@ -51,14 +51,14 @@ jobs:
           subprojects {
               tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
                   compilerOptions {
-                      jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+                      jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
                   }
               }
           }
           """
           if "kotlinOptions.jvmTarget = \"11\"" not in source:
               gradle.write_text(source.rstrip() + alignment)
-          print("Configured all Android Kotlin compile tasks to target JVM 11.")
+          print("Configured all Android Kotlin compile tasks to target JVM 17 to match Java 17.")
           PY
 
       - name: Configure Android package ID, launcher and permissions
