@@ -38,8 +38,8 @@ void main() {
         endpoint: 'https://example.test/api/chat',
       );
 
-      expect(
-        () => service.ask(question: '   ', language: 'ar'),
+      await expectLater(
+        service.ask(question: '   ', language: 'ar'),
         throwsA(isA<AiTripPlannerException>()),
       );
       service.dispose();
@@ -53,8 +53,8 @@ void main() {
         endpoint: 'not-a-url',
       );
 
-      expect(
-        () => service.ask(question: 'مرحبا', language: 'ar'),
+      await expectLater(
+        service.ask(question: 'مرحبا', language: 'ar'),
         throwsA(isA<AiTripPlannerException>()),
       );
       service.dispose();
