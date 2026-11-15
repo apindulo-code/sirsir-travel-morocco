@@ -89,7 +89,7 @@ jobs:
                   found_compile_sdk = True
           if not found_namespace or not found_application_id or not found_compile_sdk:
               raise SystemExit(f'Could not safely configure Android package and compile SDK (namespace={found_namespace}, applicationId={found_application_id}, compileSdk={found_compile_sdk})')
-          gradle.write_text('\\n'.join(lines) + '\\n')
+          gradle.write_text('\n'.join(lines) + '\n')
           # Pin stable Glance 1.2.0 to avoid the API-37-only alpha dependency.
           source = gradle.read_text()
           if 'androidx.glance:glance-appwidget:1.2.0' not in source:
@@ -101,7 +101,7 @@ jobs:
               )
           }
           '''
-              source += '\\n' + force_block
+              source += '\n' + force_block
               gradle.write_text(source)
 
 
