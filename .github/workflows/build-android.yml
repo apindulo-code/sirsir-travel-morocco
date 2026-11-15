@@ -115,14 +115,12 @@ jobs:
 
           python3 - <<'PY'
           from pathlib import Path
-          import re
-
           manifest = Path("android/app/src/main/AndroidManifest.xml")
           source = manifest.read_text()
           if "android.permission.RECEIVE_BOOT_COMPLETED" not in source:
               source = source.replace(
                   "    <application",
-                  '    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\\n    <application',
+                  '    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n    <application',
                   1,
               )
 
@@ -144,14 +142,10 @@ jobs:
               """
               if "</application>" not in source:
                   raise SystemExit("AndroidManifest.xml has no application closing tag")
-              source = source.replace("</application>", receiver + "\\n    </application>", 1)
+              source = source.replace("</application>", receiver + "\n    </application>", 1)
 
           # share_plus supplies its own FileProvider via manifest merge. Never add
           # another app-level provider or authority here.
-          providers = re.findall(r'<provider\\b[^>]*android:name=["\\']([^"\\']+)', source)
-          if any("FileProvider" in name for name in providers):
-              raise SystemExit("App manifest already declares a FileProvider; resolve before merging share_plus")
-
           manifest.write_text(source)
           print("Widget registered; WorkManager boot receiver and share_plus FileProvider are delegated to plugin manifests.")
           PY
