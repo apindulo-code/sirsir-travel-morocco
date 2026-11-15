@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'services/widget_data_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/travel_news_service.dart';
 import 'package:geolocator/geolocator.dart';
@@ -229,15 +230,17 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
       if (!mounted || requestGeneration != _weatherRequestGeneration) {
         return false;
       }
+      final cachedAt = DateTime.fromMillisecondsSinceEpoch(savedAt);
       setState(() {
         weather = cachedWeather;
         prayer = cachedPrayer;
         sea = cachedSea is Map<String, dynamic> ? cachedSea : null;
-        dataUpdatedAt = DateTime.fromMillisecondsSinceEpoch(savedAt);
+        dataUpdatedAt = cachedAt;
         usingCachedData = true;
         loading = false;
         error = 'لا يوجد اتصال حالياً. المعروض بيانات محفوظة وقد لا تعكس الحالة الحالية.';
       });
+      await _syncWeatherWidget(cachedWeather, updatedAt: cachedAt);
       return true;
     } catch (_) {
       return false;
@@ -312,6 +315,7 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
         prayerData: prayerData,
         marineData: marineData,
       );
+      await _syncWeatherWidget(weatherPayload, updatedAt: updatedAt);
     } catch (_) {
       if (!mounted || requestGeneration != _weatherRequestGeneration) return;
       final restored = await _restoreWeatherCache(
@@ -328,6 +332,26 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
       }
     }
   }
+  Future<void> _syncWeatherWidget(
+    Map<String, dynamic> payload, {
+    required DateTime updatedAt,
+  }) async {
+    final current = payload['current'];
+    if (current is! Map<String, dynamic>) return;
+
+    await WidgetDataService.update(
+      city: city,
+      temperature: WidgetDataService.formatTemperature(
+        current['temperature_2m'] as num?,
+      ),
+      condition: _weatherName(current['weather_code']),
+      wind: WidgetDataService.formatWindSpeed(
+        current['wind_speed_10m'] as num?,
+      ),
+      updatedAt: updatedAt.toLocal().toString().substring(0, 16),
+    );
+  }
+
   void _msg(String s){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(s)));}
   String _weatherName(dynamic v){final c=(v as num?)?.toInt()??-1;if(c==0)return'صحو';if(c<=3&&c>=1)return'غائم';if(c==45||c==48)return'ضباب';if(c>=51&&c<=67)return'رذاذ أو أمطار';if(c>=71&&c<=86)return'ثلوج';if(c>=95)return'عواصف رعدية';return'متغير';}
   String _advice(Map<String,dynamic> c){final w=(c['wind_speed_10m'] as num?)?.toDouble()??0;final rain=(c['precipitation'] as num?)?.toDouble()??0;final code=(c['weather_code'] as num?)?.toInt()??0;if(w>=55||code>=95)return'تنبيه: قد تؤثر الظروف الجوية على السفر. راجع النشرات الرسمية.';if(w>=35||rain>=2||[61,63,65,80,81,82].contains(code))return'الحذر مستحسن: تحقق من الطقس والطرق قبل الانطلاق.';return'المؤشرات الجوية تبدو ملائمة مبدئياً؛ تابع تحديثات الطريق.';}
