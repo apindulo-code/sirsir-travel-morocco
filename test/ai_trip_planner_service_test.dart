@@ -10,6 +10,7 @@ void main() {
     test('sends question and language to the configured backend', () async {
       final client = MockClient((request) async {
         expect(request.method, 'POST');
+        expect(request.headers['Authorization'], 'Bearer test-token');
         expect(request.url.toString(), 'https://example.test/api/chat');
         final body = jsonDecode(request.body) as Map<String, dynamic>;
         expect(body['message'], 'Plan a trip');
@@ -23,6 +24,7 @@ void main() {
       final service = AiTripPlannerService(
         client: client,
         endpoint: 'https://example.test/api/chat',
+        tokenProvider: () async => 'test-token',
       );
 
       expect(
@@ -36,6 +38,7 @@ void main() {
       final service = AiTripPlannerService(
         client: MockClient((_) async => http.Response('{}', 200)),
         endpoint: 'https://example.test/api/chat',
+        tokenProvider: () async => 'test-token',
       );
 
       await expectLater(
@@ -51,6 +54,7 @@ void main() {
       final service = AiTripPlannerService(
         client: MockClient((_) async => http.Response('{}', 200)),
         endpoint: 'not-a-url',
+        tokenProvider: () async => 'test-token',
       );
 
       await expectLater(
