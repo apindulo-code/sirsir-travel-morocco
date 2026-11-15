@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../services/ai_trip_planner_service.dart';
@@ -34,7 +35,15 @@ class _AiTripPlannerScreenState extends State<AiTripPlannerScreen> {
   @override
   void initState() {
     super.initState();
-    _service = AiTripPlannerService();
+    _service = AiTripPlannerService(
+      tokenProvider: () async {
+        try {
+          return await FirebaseAuth.instance.currentUser?.getIdToken();
+        } catch (_) {
+          return null;
+        }
+      },
+    );
     _messages.add(
       _ChatMessage(
         text: _text(
