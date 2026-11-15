@@ -101,6 +101,49 @@ jobs:
           print('Android app label set to SirSir Travel Morocco')
           PY
 
+      - name: Install native weather widget sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_path="ma/sirsirtravel/morocco/limited"
+          kotlin_dir="android/app/src/main/kotlin/${package_path}"
+          mkdir -p "${kotlin_dir}" android/app/src/main/res/layout android/app/src/main/res/xml android/app/src/main/res/drawable
+          cp tool/android_widget/TravelWeatherWidgetProvider.kt "${kotlin_dir}/TravelWeatherWidgetProvider.kt"
+          cp tool/android_widget/widget_weather.xml android/app/src/main/res/layout/widget_weather.xml
+          cp tool/android_widget/widget_weather_info.xml android/app/src/main/res/xml/widget_weather_info.xml
+          cp tool/android_widget/widget_weather_background.xml android/app/src/main/res/drawable/widget_weather_background.xml
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          source = manifest.read_text()
+          receiver_name = "ma.sirsirtravel.morocco.limited.TravelWeatherWidgetProvider"
+          if receiver_name not in source:
+              receiver = """
+                  <receiver
+                      android:name="ma.sirsirtravel.morocco.limited.TravelWeatherWidgetProvider"
+                      android:exported="true"
+                      android:label="SirSir Weather">
+                      <intent-filter>
+                          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                      </intent-filter>
+                      <meta-data
+                          android:name="android.appwidget.provider"
+                          android:resource="@xml/widget_weather_info" />
+                  </receiver>
+              """
+              if "</application>" not in source:
+                  raise SystemExit("AndroidManifest.xml has no application closing tag")
+              source = source.replace("</application>", receiver + "\n    </application>", 1)
+              manifest.write_text(source)
+          print("Registered SirSir weather App Widget receiver.")
+          PY
+
+          test -f "${kotlin_dir}/TravelWeatherWidgetProvider.kt"
+          test -f android/app/src/main/res/layout/widget_weather.xml
+          test -f android/app/src/main/res/xml/widget_weather_info.xml
+
       - name: Configure Android upload signing (only when secrets are configured)
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
