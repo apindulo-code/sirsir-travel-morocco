@@ -385,7 +385,7 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
       'Updated: ${dataUpdatedAt?.toLocal() ?? DateTime.now().toLocal()}',
       '',
       'Indicative weather information. Check official local alerts before travelling.',
-    ].join('\\n');
+    ].join('\n');
     try {
       await FileStorageService.saveAndShareText(
         fileName: 'sirsir-weather-${DateTime.now().millisecondsSinceEpoch}.txt',
