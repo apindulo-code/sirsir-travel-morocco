@@ -8,18 +8,23 @@ import 'package:http/http.dart' as http;
 ///
 /// The Gemini API key must remain on the server. The mobile app only calls
 /// this authenticated/configured backend endpoint.
+typedef AiAuthTokenProvider = Future<String?> Function();
+
 class AiTripPlannerService {
   AiTripPlannerService({
     http.Client? client,
     String? endpoint,
+    AiAuthTokenProvider? tokenProvider,
     this.timeout = const Duration(seconds: 30),
   })  : _client = client ?? http.Client(),
         _ownsClient = client == null,
-        _endpoint = endpoint ?? const String.fromEnvironment('SIRSIR_AI_ENDPOINT');
+        _endpoint = endpoint ?? const String.fromEnvironment('SIRSIR_AI_ENDPOINT'),
+        _tokenProvider = tokenProvider;
 
   final http.Client _client;
   final bool _ownsClient;
   final String _endpoint;
+  final AiAuthTokenProvider? _tokenProvider;
   final Duration timeout;
 
   Future<String> ask({
@@ -46,13 +51,35 @@ class AiTripPlannerService {
       );
     }
 
+    final tokenProvider = _tokenProvider;
+    if (tokenProvider == null) {
+      throw const AiTripPlannerException(
+        'يلزم تسجيل الدخول لاستخدام المرشد الذكي.',
+      );
+    }
+
+    String? token;
+    try {
+      token = await tokenProvider();
+    } catch (_) {
+      throw const AiTripPlannerException(
+        'تعذر التحقق من الحساب. أعد تسجيل الدخول ثم حاول مجدداً.',
+      );
+    }
+    if (token == null || token.trim().isEmpty) {
+      throw const AiTripPlannerException(
+        'سجل الدخول إلى حساب SirSir لاستخدام المرشد الذكي.',
+      );
+    }
+
     try {
       final response = await _client
           .post(
             uri,
-            headers: const {
+            headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json; charset=utf-8',
+              'Authorization': 'Bearer $token',
             },
             body: jsonEncode({
               'message': normalizedQuestion,
