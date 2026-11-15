@@ -4,6 +4,7 @@ import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import { applicationDefault, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
+import { fileURLToPath } from "node:url";
 
 const PORT = Number.parseInt(process.env.PORT || "8080", 10);
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
@@ -135,7 +136,10 @@ async function main() {
   });
 }
 
-if (process.env.NODE_ENV !== "test") {
+const isDirectExecution =
+  process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+
+if (isDirectExecution) {
   main().catch(() => {
     console.error("Backend startup failed: check required environment and identity configuration");
     process.exit(1);
