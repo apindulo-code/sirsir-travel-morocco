@@ -59,11 +59,8 @@ jobs:
                   targetCompatibility = "17"
               }
           }
-          """
-          if "kotlinOptions.jvmTarget = \"11\"" not in source:
-              gradle.write_text(source.rstrip() + alignment)
-          # Some Flutter plugins set Java 8 after project configuration. Re-apply
-          # both Java and Kotlin targets after every Android subproject is evaluated.
+          
+          // Re-apply after plugins configure their Java compile tasks.
           gradle.projectsEvaluated {
               rootProject.allprojects {
                   tasks.withType<org.gradle.api.tasks.compile.JavaCompile>().configureEach {
@@ -77,6 +74,9 @@ jobs:
                   }
               }
           }
+          """
+          if "kotlinOptions.jvmTarget = \"11\"" not in source:
+              gradle.write_text(source.rstrip() + alignment)
           print("Configured all Android Java and Kotlin compile tasks to target JVM 17 after project evaluation.")
           PY
 
