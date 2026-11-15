@@ -1,65 +1,41 @@
-import 'dart:io';
+import 'file_storage_service_stub.dart'
+    if (dart.library.io) 'file_storage_service_io.dart' as platform;
 
-import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
-
-/// Saves durable files in app documents and shares a cache copy.
-/// share_plus supplies its own Android FileProvider via manifest merging.
+/// Cross-platform facade; the mobile implementation is isolated from web builds.
 class FileStorageService {
   FileStorageService._();
 
-  static String sanitizeFileName(String value) {
-    final cleaned = value
-        .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
-        .replaceAll(RegExp(r'\s+'), '_')
-        .replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
-    final trimmed = cleaned.replaceAll(RegExp(r'^[_ .]+|[_ .]+$'), '');
-    return trimmed.isEmpty ? 'sirsir-export.txt' : trimmed;
-  }
+  static String sanitizeFileName(String value) =>
+      platform.FileStorageServicePlatform.sanitizeFileName(value);
 
-  static Future<File> saveTextFile({
+  static Future<String> saveTextFile({
     required String fileName,
     required String contents,
-  }) async {
-    if (kIsWeb) {
-      throw UnsupportedError('Local file storage is available on mobile devices.');
-    }
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/${sanitizeFileName(fileName)}');
-    await file.writeAsString(contents, flush: true);
-    return file;
-  }
+  }) =>
+      platform.FileStorageServicePlatform.saveTextFile(
+        fileName: fileName,
+        contents: contents,
+      );
 
   static Future<void> shareFile(
-    File savedFile, {
+    String savedPath, {
     String? text,
     String? subject,
-  }) async {
-    if (kIsWeb) {
-      throw UnsupportedError('File sharing is available on mobile devices.');
-    }
-    if (!await savedFile.exists()) {
-      throw FileSystemException('The file to share does not exist', savedFile.path);
-    }
-    // share_plus FileProvider exposes cache paths; retain the durable original.
-    final cache = await getTemporaryDirectory();
-    final shareCopy = File('${cache.path}/${savedFile.uri.pathSegments.last}');
-    await savedFile.copy(shareCopy.path);
-    await Share.shareXFiles(
-      [XFile(shareCopy.path, mimeType: 'text/plain')],
-      text: text,
-      subject: subject,
-    );
-  }
+  }) =>
+      platform.FileStorageServicePlatform.shareFile(
+        savedPath,
+        text: text,
+        subject: subject,
+      );
 
-  static Future<File> saveAndShareText({
+  static Future<void> saveAndShareText({
     required String fileName,
     required String contents,
     String? subject,
-  }) async {
-    final file = await saveTextFile(fileName: fileName, contents: contents);
-    await shareFile(file, subject: subject);
-    return file;
-  }
+  }) =>
+      platform.FileStorageServicePlatform.saveAndShareText(
+        fileName: fileName,
+        contents: contents,
+        subject: subject,
+      );
 }

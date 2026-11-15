@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:ui' show DartPluginRegistrant;
 
 import 'package:flutter/foundation.dart';
@@ -34,7 +33,7 @@ class BackgroundService {
   };
 
   static Future<void> initialize() async {
-    if (kIsWeb || !Platform.isAndroid) return;
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
     await Workmanager().initialize(
       callbackDispatcher,
       isInDebugMode: kDebugMode,
