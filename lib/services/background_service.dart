@@ -76,7 +76,7 @@ class BackgroundService {
           savedLongitude >= -180 &&
           savedLongitude <= 180;
       final coordinates = hasSavedCoordinates
-          ? <double>[savedLatitude!, savedLongitude!]
+          ? <double>[savedLatitude, savedLongitude]
           : _cityCoordinates[city]!;
       final uri = Uri.https('api.open-meteo.com', '/v1/forecast', {
         'latitude': coordinates[0].toString(),
