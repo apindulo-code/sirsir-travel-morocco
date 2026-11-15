@@ -44,3 +44,14 @@ coverage/
 
 # Web
 /web/.dart_tool/
+
+# Environment secrets (never commit real credentials)
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/node_modules/
+backend/coverage/
+backend/*.log
