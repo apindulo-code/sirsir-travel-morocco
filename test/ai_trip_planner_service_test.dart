@@ -45,7 +45,7 @@ void main() {
       service.dispose();
     });
 
-    test('does not accept a non-HTTPS endpoint in release builds', () async {
+    test('rejects a malformed backend endpoint', () async {
       // The production restriction is enforced by the service. This test
       // verifies that malformed endpoints are rejected in every build mode.
       final service = AiTripPlannerService(
