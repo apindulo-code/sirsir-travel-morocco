@@ -47,18 +47,20 @@ jobs:
           source = gradle.read_text()
           alignment = """
           
-          // Keep Kotlin bytecode consistent across Android plugin modules.
-          subprojects {
-              tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-                  compilerOptions {
-                      jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+          // Apply Kotlin JVM 17 after plugins have configured their own compile tasks.
+          gradle.projectsEvaluated {
+              rootProject.allprojects {
+                  tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+                      compilerOptions {
+                          jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+                      }
                   }
               }
           }
           """
           if "kotlinOptions.jvmTarget = \"11\"" not in source:
               gradle.write_text(source.rstrip() + alignment)
-          print("Configured Android plugin Kotlin compile tasks to target JVM 17.")
+          print("Enforced Kotlin JVM 17 for Android plugin compile tasks after plugin configuration.")
           PY
 
       - name: Configure Android package ID, launcher and permissions
