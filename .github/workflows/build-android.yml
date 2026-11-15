@@ -34,15 +34,7 @@ jobs:
       - name: Generate Flutter platform files
         run: flutter create --platforms=android,web --project-name=sirsir_travel_morocco .
 
-      - name: Install Android API 37 required by AndroidX Glance
-        shell: bash
-        run: |
-          set -euo pipefail
-          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
-          SDKMANAGER="$(find "$SDK_ROOT" -type f -name sdkmanager -print -quit)"
-          test -n "$SDKMANAGER" && test -x "$SDKMANAGER"
-          yes | "$SDKMANAGER" --licenses >/dev/null || true
-          "$SDKMANAGER" "platforms;android-37"
+
 
 
       - name: Align Android Kotlin bytecode targets for native plugins
@@ -93,11 +85,25 @@ jobs:
                   lines[index] = f'        applicationId = "{package_id}"'
                   found_application_id = True
               elif line.strip().startswith('compileSdk =') or line.strip().startswith('compileSdkVersion'):
-                  lines[index] = '    compileSdk = 37' if gradle.suffix == '.kts' else '    compileSdkVersion 37'
+                  lines[index] = '    compileSdk = 36' if gradle.suffix == '.kts' else '    compileSdkVersion 36'
                   found_compile_sdk = True
           if not found_namespace or not found_application_id or not found_compile_sdk:
               raise SystemExit(f'Could not safely configure Android package and compile SDK (namespace={found_namespace}, applicationId={found_application_id}, compileSdk={found_compile_sdk})')
-          gradle.write_text('\n'.join(lines) + '\n')
+          gradle.write_text('\\n'.join(lines) + '\\n')
+          # Pin stable Glance 1.2.0 to avoid the API-37-only alpha dependency.
+          source = gradle.read_text()
+          if 'androidx.glance:glance-appwidget:1.2.0' not in source:
+              force_block = '''
+          configurations.configureEach {
+              resolutionStrategy.force(
+                  "androidx.glance:glance:1.2.0",
+                  "androidx.glance:glance-appwidget:1.2.0"
+              )
+          }
+          '''
+              source += '\\n' + force_block
+              gradle.write_text(source)
+
 
           # Android resolves ".MainActivity" against the Gradle namespace.
           # Move the generated launcher class into that exact package.
