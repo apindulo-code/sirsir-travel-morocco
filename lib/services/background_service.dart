@@ -65,7 +65,19 @@ class BackgroundService {
       final city = savedCity != null && _cityCoordinates.containsKey(savedCity)
           ? savedCity
           : 'الدار البيضاء';
-      final coordinates = _cityCoordinates[city]!;
+      final savedLatitude = preferences.getDouble('travel_latitude');
+      final savedLongitude = preferences.getDouble('travel_longitude');
+      final hasSavedCoordinates = savedLatitude != null &&
+          savedLongitude != null &&
+          savedLatitude.isFinite &&
+          savedLongitude.isFinite &&
+          savedLatitude >= -90 &&
+          savedLatitude <= 90 &&
+          savedLongitude >= -180 &&
+          savedLongitude <= 180;
+      final coordinates = hasSavedCoordinates
+          ? <double>[savedLatitude!, savedLongitude!]
+          : _cityCoordinates[city]!;
       final uri = Uri.https('api.open-meteo.com', '/v1/forecast', {
         'latitude': coordinates[0].toString(),
         'longitude': coordinates[1].toString(),

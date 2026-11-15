@@ -120,6 +120,8 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
       try {
         final preferences = await SharedPreferences.getInstance();
         await preferences.setString('travel_city', nearestCity);
+        await preferences.setDouble('travel_latitude', position.latitude);
+        await preferences.setDouble('travel_longitude', position.longitude);
       } catch (_) {}
       await _load(
         position.latitude,
@@ -169,8 +171,23 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
     try {
       final preferences = await SharedPreferences.getInstance();
       final saved = preferences.getString('travel_city');
+      final savedLat = preferences.getDouble('travel_latitude');
+      final savedLon = preferences.getDouble('travel_longitude');
       if (!mounted) return;
-      await _loadCity(saved != null && cities.containsKey(saved) ? saved : city);
+      final selectedCity = saved != null && cities.containsKey(saved) ? saved : city;
+      if (savedLat != null &&
+          savedLon != null &&
+          savedLat.isFinite &&
+          savedLon.isFinite &&
+          savedLat >= -90 &&
+          savedLat <= 90 &&
+          savedLon >= -180 &&
+          savedLon <= 180) {
+        city = selectedCity;
+        await _load(savedLat, savedLon, selectedCity);
+      } else {
+        await _loadCity(selectedCity);
+      }
     } catch (_) {
       if (mounted) await _loadCity(city);
     }
@@ -181,6 +198,9 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
     try {
       final preferences = await SharedPreferences.getInstance();
       await preferences.setString('travel_city', name);
+      final coordinates = cities[name]!;
+      await preferences.setDouble('travel_latitude', coordinates[0]);
+      await preferences.setDouble('travel_longitude', coordinates[1]);
     } catch (_) {}
     final p = cities[name]!;
     await _load(p[0], p[1], name);
