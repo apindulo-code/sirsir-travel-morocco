@@ -9,6 +9,7 @@ import 'screens/auth_screen.dart';
 import 'screens/route_planner_screen.dart';
 import 'services/firestore_service.dart';
 import 'services/favorites_service.dart';
+import 'services/background_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -147,6 +148,14 @@ String cityLabel(String city) {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Schedule the Android weather worker without blocking app startup on failure.
+  try {
+    await BackgroundService.initialize();
+  } catch (error, stack) {
+    debugPrint('SirSir background scheduling unavailable: $error');
+    debugPrintStack(stackTrace: stack);
+  }
 
   FlutterError.onError = (details) {
     FlutterError.presentError(details);

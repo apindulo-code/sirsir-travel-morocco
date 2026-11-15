@@ -34,6 +34,38 @@ jobs:
       - name: Generate Flutter platform files
         run: flutter create --platforms=android,web --project-name=sirsir_travel_morocco .
 
+
+
+
+      - name: Align Android Kotlin bytecode targets for native plugins
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          gradle = Path("android/build.gradle.kts")
+          if not gradle.exists():
+              raise SystemExit("Expected generated root Android Kotlin DSL build file")
+          source = gradle.read_text()
+          alignment = """
+          
+          // Apply Kotlin JVM 17 after plugins have configured their own compile tasks.
+          gradle.projectsEvaluated {
+              rootProject.allprojects {
+                  tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+                      compilerOptions {
+                          jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+                      }
+                  }
+              }
+          }
+          """
+          if "kotlinOptions.jvmTarget = \"11\"" not in source:
+              gradle.write_text(source.rstrip() + alignment)
+          print("Enforced Kotlin JVM 17 for Android plugin compile tasks after plugin configuration.")
+          PY
+
       - name: Configure Android package ID, launcher and permissions
         run: |
           python - <<'PY'
@@ -44,7 +76,7 @@ jobs:
           if gradle is None:
               raise SystemExit('Android app Gradle file not found')
           lines = gradle.read_text().splitlines()
-          found_namespace = found_application_id = False
+          found_namespace = found_application_id = found_compile_sdk = False
           for index, line in enumerate(lines):
               if line.strip().startswith('namespace ='):
                   lines[index] = f'    namespace = "{package_id}"'
@@ -52,9 +84,14 @@ jobs:
               elif line.strip().startswith('applicationId ='):
                   lines[index] = f'        applicationId = "{package_id}"'
                   found_application_id = True
-          if not found_namespace or not found_application_id:
-              raise SystemExit(f'Could not safely set Android package ID (namespace={found_namespace}, applicationId={found_application_id})')
+              elif line.strip().startswith('compileSdk =') or line.strip().startswith('compileSdkVersion'):
+                  lines[index] = '    compileSdk = 36' if gradle.suffix == '.kts' else '    compileSdkVersion 36'
+                  found_compile_sdk = True
+          if not found_namespace or not found_application_id or not found_compile_sdk:
+              raise SystemExit(f'Could not safely configure Android package and compile SDK (namespace={found_namespace}, applicationId={found_application_id}, compileSdk={found_compile_sdk})')
           gradle.write_text('\n'.join(lines) + '\n')
+
+
 
           # Android resolves ".MainActivity" against the Gradle namespace.
           # Move the generated launcher class into that exact package.
@@ -95,11 +132,90 @@ jobs:
               )
           if label_count != 1:
               raise SystemExit('Could not safely set Android application label')
-          permissions = '    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n'
+          permissions = '    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n'
           source = source.replace('    <application', permissions + '    <application', 1)
           manifest.write_text(source)
           print('Android app label set to SirSir Travel Morocco')
           PY
+
+      - name: Pin AndroidX Glance to stable 1.2.0 across all Android modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          gradle = Path('android/build.gradle.kts')
+          if not gradle.exists():
+              raise SystemExit('Generated root android/build.gradle.kts not found')
+          source = gradle.read_text()
+          marker = 'resolutionStrategy.force('
+          if marker not in source:
+              source += '''
+
+          // Force the stable Glance release for every Android plugin and app configuration.
+          allprojects {
+              configurations.configureEach {
+                  resolutionStrategy.force(
+                      "androidx.glance:glance:1.2.0",
+                      "androidx.glance:glance-appwidget:1.2.0"
+                  )
+              }
+          }
+          '''
+              gradle.write_text(source)
+          print('Pinned Glance 1.2.0 in the root Gradle project for all Android modules.')
+          PY
+      - name: Install native widget and background-work sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_path="ma/sirsirtravel/morocco/limited"
+          kotlin_dir="android/app/src/main/kotlin/${package_path}"
+          mkdir -p "${kotlin_dir}" android/app/src/main/res/layout android/app/src/main/res/xml android/app/src/main/res/drawable
+          cp tool/android_widget/TravelWidgetProvider.kt "${kotlin_dir}/TravelWidgetProvider.kt"
+          cp tool/android_widget/widget_travel.xml android/app/src/main/res/layout/widget_travel.xml
+          cp tool/android_widget/widget_travel_info.xml android/app/src/main/res/xml/widget_travel_info.xml
+          cp tool/android_widget/widget_weather_background.xml android/app/src/main/res/drawable/widget_weather_background.xml
+
+          python3 - <<'PY'
+          from pathlib import Path
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          source = manifest.read_text()
+          if "android.permission.RECEIVE_BOOT_COMPLETED" not in source:
+              source = source.replace(
+                  "    <application",
+                  '    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n    <application',
+                  1,
+              )
+
+          # WorkManager's library manifest already registers reboot rescheduling.
+          receiver_name = "ma.sirsirtravel.morocco.limited.TravelWidgetProvider"
+          if receiver_name not in source:
+              receiver = """
+                  <receiver
+                      android:name="ma.sirsirtravel.morocco.limited.TravelWidgetProvider"
+                      android:exported="true"
+                      android:label="SirSir Travel Weather">
+                      <intent-filter>
+                          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                      </intent-filter>
+                      <meta-data
+                          android:name="android.appwidget.provider"
+                          android:resource="@xml/widget_travel_info" />
+                  </receiver>
+              """
+              if "</application>" not in source:
+                  raise SystemExit("AndroidManifest.xml has no application closing tag")
+              source = source.replace("</application>", receiver + "\n    </application>", 1)
+
+          # share_plus supplies its own FileProvider via manifest merge. Never add
+          # another app-level provider or authority here.
+          manifest.write_text(source)
+          print("Widget registered; WorkManager boot receiver and share_plus FileProvider are delegated to plugin manifests.")
+          PY
+          test -f "${kotlin_dir}/TravelWidgetProvider.kt"
+          test -f android/app/src/main/res/layout/widget_travel.xml
+          test -f android/app/src/main/res/xml/widget_travel_info.xml
 
       - name: Configure Android upload signing (only when secrets are configured)
         env:
@@ -240,6 +356,24 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Align Android plugin Java bytecode targets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          cache = Path.home() / ".pub-cache" / "hosted" / "pub.dev"
+          changed = []
+          for gradle in cache.glob("*/android/build.gradle*"):
+              source = gradle.read_text()
+              updated = source.replace("JavaVersion.VERSION_1_8", "JavaVersion.VERSION_17")
+              if updated != source:
+                  gradle.write_text(updated)
+                  changed.append(str(gradle))
+          print(f"Updated Java 8 Android plugin compile targets to Java 17 in {len(changed)} plugin Gradle files.")
+          for path in changed:
+              print(path)
+          PY
       - name: Analyze Flutter source
         run: flutter analyze --fatal-warnings --no-fatal-infos
 

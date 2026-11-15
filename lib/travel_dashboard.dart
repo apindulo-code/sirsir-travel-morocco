@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'services/widget_data_service.dart';
+import 'services/file_storage_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/travel_news_service.dart';
 import 'package:geolocator/geolocator.dart';
@@ -118,6 +120,8 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
       try {
         final preferences = await SharedPreferences.getInstance();
         await preferences.setString('travel_city', nearestCity);
+        await preferences.setDouble('travel_latitude', position.latitude);
+        await preferences.setDouble('travel_longitude', position.longitude);
       } catch (_) {}
       await _load(
         position.latitude,
@@ -167,8 +171,23 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
     try {
       final preferences = await SharedPreferences.getInstance();
       final saved = preferences.getString('travel_city');
+      final savedLat = preferences.getDouble('travel_latitude');
+      final savedLon = preferences.getDouble('travel_longitude');
       if (!mounted) return;
-      await _loadCity(saved != null && cities.containsKey(saved) ? saved : city);
+      final selectedCity = saved != null && cities.containsKey(saved) ? saved : city;
+      if (savedLat != null &&
+          savedLon != null &&
+          savedLat.isFinite &&
+          savedLon.isFinite &&
+          savedLat >= -90 &&
+          savedLat <= 90 &&
+          savedLon >= -180 &&
+          savedLon <= 180) {
+        city = selectedCity;
+        await _load(savedLat, savedLon, selectedCity);
+      } else {
+        await _loadCity(selectedCity);
+      }
     } catch (_) {
       if (mounted) await _loadCity(city);
     }
@@ -179,6 +198,9 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
     try {
       final preferences = await SharedPreferences.getInstance();
       await preferences.setString('travel_city', name);
+      final coordinates = cities[name]!;
+      await preferences.setDouble('travel_latitude', coordinates[0]);
+      await preferences.setDouble('travel_longitude', coordinates[1]);
     } catch (_) {}
     final p = cities[name]!;
     await _load(p[0], p[1], name);
@@ -229,15 +251,17 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
       if (!mounted || requestGeneration != _weatherRequestGeneration) {
         return false;
       }
+      final cachedAt = DateTime.fromMillisecondsSinceEpoch(savedAt);
       setState(() {
         weather = cachedWeather;
         prayer = cachedPrayer;
         sea = cachedSea is Map<String, dynamic> ? cachedSea : null;
-        dataUpdatedAt = DateTime.fromMillisecondsSinceEpoch(savedAt);
+        dataUpdatedAt = cachedAt;
         usingCachedData = true;
         loading = false;
         error = 'لا يوجد اتصال حالياً. المعروض بيانات محفوظة وقد لا تعكس الحالة الحالية.';
       });
+      await _syncWeatherWidget(cachedWeather, updatedAt: cachedAt);
       return true;
     } catch (_) {
       return false;
@@ -312,6 +336,7 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
         prayerData: prayerData,
         marineData: marineData,
       );
+      await _syncWeatherWidget(weatherPayload, updatedAt: updatedAt);
     } catch (_) {
       if (!mounted || requestGeneration != _weatherRequestGeneration) return;
       final restored = await _restoreWeatherCache(
@@ -328,6 +353,50 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
       }
     }
   }
+  Future<void> _syncWeatherWidget(
+    Map<String, dynamic> payload, {
+    required DateTime updatedAt,
+  }) async {
+    final current = payload['current'];
+    if (current is! Map<String, dynamic>) return;
+
+    await WidgetDataService.update(
+      city: city,
+      temperature: WidgetDataService.formatTemperature(
+        current['temperature_2m'] as num?,
+      ),
+      condition: _weatherName(current['weather_code']),
+      wind: WidgetDataService.formatWindSpeed(
+        current['wind_speed_10m'] as num?,
+      ),
+      updatedAt: updatedAt.toLocal().toString().substring(0, 16),
+    );
+  }
+
+  Future<void> _shareWeatherReport(Map<String, dynamic> current) async {
+    final report = [
+      'SirSir Travel Morocco - Weather report',
+      'City: $city',
+      'Temperature: ${current['temperature_2m'] ?? '--'} °C',
+      'Condition: ${_weatherName(current['weather_code'])}',
+      'Wind: ${current['wind_speed_10m'] ?? '--'} km/h',
+      'Humidity: ${current['relative_humidity_2m'] ?? '--'}%',
+      'Precipitation: ${current['precipitation'] ?? '--'} mm',
+      'Updated: ${dataUpdatedAt?.toLocal() ?? DateTime.now().toLocal()}',
+      '',
+      'Indicative weather information. Check official local alerts before travelling.',
+    ].join('\n');
+    try {
+      await FileStorageService.saveAndShareText(
+        fileName: 'sirsir-weather-${DateTime.now().millisecondsSinceEpoch}.txt',
+        contents: report,
+        subject: 'SirSir Travel Morocco - Weather',
+      );
+    } catch (error) {
+      _msg('تعذر حفظ أو مشاركة التقرير: $error');
+    }
+  }
+
   void _msg(String s){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(s)));}
   String _weatherName(dynamic v){final c=(v as num?)?.toInt()??-1;if(c==0)return'صحو';if(c<=3&&c>=1)return'غائم';if(c==45||c==48)return'ضباب';if(c>=51&&c<=67)return'رذاذ أو أمطار';if(c>=71&&c<=86)return'ثلوج';if(c>=95)return'عواصف رعدية';return'متغير';}
   String _advice(Map<String,dynamic> c){final w=(c['wind_speed_10m'] as num?)?.toDouble()??0;final rain=(c['precipitation'] as num?)?.toDouble()??0;final code=(c['weather_code'] as num?)?.toInt()??0;if(w>=55||code>=95)return'تنبيه: قد تؤثر الظروف الجوية على السفر. راجع النشرات الرسمية.';if(w>=35||rain>=2||[61,63,65,80,81,82].contains(code))return'الحذر مستحسن: تحقق من الطقس والطرق قبل الانطلاق.';return'المؤشرات الجوية تبدو ملائمة مبدئياً؛ تابع تحديثات الطريق.';}
@@ -391,7 +460,16 @@ class _TravelDashboardState extends State<TravelDashboard> with SingleTickerProv
       if(error!=null)Card(child:Padding(padding:const EdgeInsets.all(12),child:Text(error!))),
       if(c!=null&&!loading)...[
         Card(child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-          const Text('الطقس الآن',style:TextStyle(fontWeight:FontWeight.bold,fontSize:17)),
+          Row(
+            children: [
+              const Expanded(child: Text('الطقس الآن', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17))),
+              IconButton(
+                tooltip: 'حفظ ومشاركة تقرير الطقس',
+                onPressed: () => _shareWeatherReport(c),
+                icon: const Icon(Icons.share_outlined),
+              ),
+            ],
+          ),
           Row(children:[const Icon(Icons.cloud,size:40,color:Colors.blue),Text(' ${(c['temperature_2m'] as num?)?.round()??'--'}°',style:const TextStyle(fontSize:30,fontWeight:FontWeight.bold)),const SizedBox(width:10),Text(_weatherName(c['weather_code']))]),
           Wrap(spacing:8,children:[Chip(label:Text('الرياح ${c['wind_speed_10m']} كم/س')),Chip(label:Text('الرطوبة ${c['relative_humidity_2m']}%')),Chip(label:Text('الأمطار ${c['precipitation']} مم')),Chip(label:Text('الضغط ${(c['pressure_msl'] as num?)?.round()??'--'} hPa'))]),
           Text(_advice(c),style:const TextStyle(fontWeight:FontWeight.w600)),

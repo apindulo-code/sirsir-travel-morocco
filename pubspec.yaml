@@ -18,6 +18,10 @@ dependencies:
   firebase_auth: ^6.1.2
   cloud_firestore: ^6.0.3
   shared_preferences: ^2.5.3
+  home_widget: ^0.8.1
+  workmanager: ^0.7.0
+  path_provider: ^2.1.5
+  share_plus: 10.1.2
   xml: ^6.5.0
 
 dev_dependencies:
