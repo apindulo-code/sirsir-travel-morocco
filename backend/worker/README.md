@@ -7,15 +7,15 @@ This is a separate Workers-compatible implementation of the existing Express API
 - Firebase ID tokens are signature-verified with Google's Secure Token JWKS using `jose`.
 - JWT issuer, audience, algorithm, expiry and required claims are checked.
 - Firebase Identity Toolkit `accounts:lookup` confirms the account still exists, is not disabled, and its `validSince` timestamp does not revoke the token's `auth_time`. Failures deny access.
-- Gemini is called only after Firebase verification and request validation.
-- Gemini key is sent in the `x-goog-api-key` header and must be a Cloudflare secret.
+- Gemini is called only after authentication and input validation; the API key is stored as a Cloudflare secret and sent in the `x-goog-api-key` header.
 - Browser CORS is restricted to one exact configured origin. Native requests without Origin are accepted but still require a Firebase ID token.
 - Request body is limited to 8 KiB; message length to 2,000 characters; languages to ar/fr/en/es.
 - Provider errors and bearer tokens are not logged.
+- Two Cloudflare rate-limit bindings are included: an IP edge guard (20/minute) and a per-Firebase-UID chat guard (1/minute). Counters are approximate and location-scoped; they are not global quotas. The per-user setting is intentionally conservative for initial testing and can be tuned after observing real traffic.
 
 ## Configuration
 
-Copy `wrangler.toml.example` to `wrangler.toml` and replace the browser origin with the actual SirSir web origin. Configure a Cloudflare Rate Limiting binding named `CHAT_LIMITER`; its example is 7 requests per 5 minutes per client IP, approximately preserving the previous 20-per-15-minute ceiling. Cloudflare counters are location-scoped, so this is an edge abuse guard rather than a global quota. Add per-Firebase-user quotas before broad public launch.
+Copy `wrangler.toml.example` to `wrangler.toml` and replace the browser origin with the actual SirSir web origin. The example rate-limit namespace IDs must be unique within your Cloudflare account; change them if already used by another Worker.
 
 Set secrets interactively; do not put values in source control:
 
@@ -34,7 +34,7 @@ npm install
 npm test
 ```
 
-The tests inject authentication and Gemini dependencies so they do not need real Firebase tokens, Gemini credentials, or network access.
+The tests inject authentication and Gemini dependencies so they do not need real Firebase tokens, Gemini credentials, or network access. Firebase account disabled/revocation boundary logic is tested separately.
 
 ## Local development and deployment
 
