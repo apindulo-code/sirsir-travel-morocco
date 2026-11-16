@@ -1,0 +1,17 @@
+name = "sirsir-travel-morocco-ai"
+main = "src/index.js"
+compatibility_date = "2026-11-16"
+
+[vars]
+FIREBASE_PROJECT_ID = "sirsir-travel-morocco"
+GEMINI_MODEL = "gemini-3.8-flash"
+GEMINI_TIMEOUT_MS = "30000"
+ALLOWED_ORIGIN = "https://REPLACE-WITH-YOUR-WEB-APP-ORIGIN"
+
+# Create a Cloudflare Workers Rate Limiting binding in your account and
+# replace the namespace_id with its assigned ID. This is an edge abuse guard;
+# counters are location-scoped, not a global per-user quota.
+[[ratelimits]]
+name = "CHAT_LIMITER"
+namespace_id = "1001"
+simple = { limit = 7, period = 300 }
