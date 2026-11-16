@@ -77,11 +77,11 @@ export function createWorker(deps = {}) {
         return json({ error: "payload_too_large" }, 413, headers);
       }
 
-      // Cloudflare Rate Limiting counters are location-scoped, not a global quota.
-      if (env.CHAT_LIMITER) {
-        const key = request.headers.get("cf-connecting-ip") || "unknown-client";
-        const result = await env.CHAT_LIMITER.limit({ key });
-        if (!result.success) return json({ error: "rate_limited" }, 429, headers);
+      // Edge guard limits unauthenticated traffic by source IP.
+      if (env.EDGE_LIMITER) {
+        const ip = request.headers.get("cf-connecting-ip") || "unknown-client";
+        const edgeResult = await env.EDGE_LIMITER.limit({ key: ip });
+        if (!edgeResult.success) return json({ error: "rate_limited" }, 429, headers);
       }
 
       const authorization = request.headers.get("authorization") || "";
@@ -93,6 +93,12 @@ export function createWorker(deps = {}) {
         identity = await verifyToken(match[1], env);
       } catch {
         return json({ error: "unauthorized" }, 401, headers);
+      }
+
+      // Per-user guard avoids penalizing multiple legitimate users behind one NAT.
+      if (env.CHAT_LIMITER) {
+        const userResult = await env.CHAT_LIMITER.limit({ key: identity.uid });
+        if (!userResult.success) return json({ error: "rate_limited" }, 429, headers);
       }
 
       let body;
