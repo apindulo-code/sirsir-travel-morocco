@@ -13,7 +13,7 @@ function json(data, status, headers = {}) {
 }
 
 function corsHeaders(origin, env) {
-  const headers = { "vary": "Origin" };
+  const headers = { vary: "Origin" };
   if (origin && origin === env.ALLOWED_ORIGIN) {
     headers["access-control-allow-origin"] = origin;
     headers["access-control-allow-methods"] = "POST, GET, OPTIONS";
@@ -23,8 +23,32 @@ function corsHeaders(origin, env) {
   return headers;
 }
 
-function isAllowedOrigin(origin, env) {
-  return !origin || origin === env.ALLOWED_ORIGIN;
+async function readBoundedBody(request) {
+  const reader = request.body?.getReader();
+  if (!reader) return "";
+  const chunks = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > MAX_BODY_BYTES) {
+        await reader.cancel();
+        throw new RangeError("payload_too_large");
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(bytes);
 }
 
 export function createWorker(deps = {}) {
@@ -37,18 +61,13 @@ export function createWorker(deps = {}) {
       const origin = request.headers.get("origin");
       const headers = corsHeaders(origin, env);
 
-      if (!isAllowedOrigin(origin, env)) {
+      if (origin && origin !== env.ALLOWED_ORIGIN) {
         return json({ error: "origin_not_allowed" }, 403);
       }
-
-      if (request.method === "OPTIONS") {
-        return new Response(null, { status: 204, headers });
-      }
-
+      if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
       if (url.pathname === "/health" && request.method === "GET") {
         return json({ status: "ok" }, 200, headers);
       }
-
       if (url.pathname !== "/api/chat" || request.method !== "POST") {
         return json({ error: "not_found" }, 404, headers);
       }
@@ -58,9 +77,7 @@ export function createWorker(deps = {}) {
         return json({ error: "payload_too_large" }, 413, headers);
       }
 
-      // Cloudflare Rate Limiting binding is configured in wrangler.toml.
-      // Its counters are location-scoped and therefore an edge abuse guard,
-      // not a globally exact per-user quota.
+      // Cloudflare Rate Limiting counters are location-scoped, not a global quota.
       if (env.CHAT_LIMITER) {
         const key = request.headers.get("cf-connecting-ip") || "unknown-client";
         const result = await env.CHAT_LIMITER.limit({ key });
@@ -80,12 +97,12 @@ export function createWorker(deps = {}) {
 
       let body;
       try {
-        const raw = await request.text();
-        if (new TextEncoder().encode(raw).byteLength > MAX_BODY_BYTES) {
+        const raw = await readBoundedBody(request);
+        body = JSON.parse(raw);
+      } catch (error) {
+        if (error instanceof RangeError) {
           return json({ error: "payload_too_large" }, 413, headers);
         }
-        body = JSON.parse(raw);
-      } catch {
         return json({ error: "bad_request" }, 400, headers);
       }
 
@@ -106,7 +123,6 @@ export function createWorker(deps = {}) {
         if (error?.name === "AbortError" || error?.name === "TimeoutError") {
           return json({ error: "upstream_timeout" }, 504, headers);
         }
-        // Never log tokens, prompts, provider responses or secret-bearing errors.
         console.error("AI provider request failed");
         return json({ error: "upstream_unavailable" }, 502, headers);
       }
@@ -114,5 +130,4 @@ export function createWorker(deps = {}) {
   };
 }
 
-const worker = createWorker();
-export default worker;
+export default createWorker();
