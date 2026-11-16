@@ -131,11 +131,11 @@ test("oversized raw request body is rejected", async () => {
   assert.equal(calls.generate, 0);
 });
 
-test("Cloudflare rate limit binding blocks requests when exhausted", async () => {
+test("edge rate limiter rejects abusive IP traffic before Firebase lookup", async () => {
   const { worker, calls } = harness();
   const limitedEnv = {
     ...env,
-    CHAT_LIMITER: { limit: async () => ({ success: false }) },
+    EDGE_LIMITER: { limit: async () => ({ success: false }) },
   };
   const response = await worker.fetch(request("/api/chat", {
     headers: { authorization: "Bearer valid-token", "cf-connecting-ip": "203.0.113.8" },
@@ -143,4 +143,26 @@ test("Cloudflare rate limit binding blocks requests when exhausted", async () =>
   }), limitedEnv);
   assert.equal(response.status, 429);
   assert.equal(calls.verify, 0);
+});
+
+test("per-user rate limiter uses the verified Firebase uid", async () => {
+  const { worker, calls } = harness();
+  let rateLimitKey;
+  const limitedEnv = {
+    ...env,
+    CHAT_LIMITER: {
+      limit: async ({ key }) => {
+        rateLimitKey = key;
+        return { success: false };
+      },
+    },
+  };
+  const response = await worker.fetch(request("/api/chat", {
+    headers: { authorization: "Bearer valid-token" },
+    body: { message: "Hello", language: "en" },
+  }), limitedEnv);
+  assert.equal(response.status, 429);
+  assert.equal(rateLimitKey, "firebase-user-1");
+  assert.equal(calls.verify, 1);
+  assert.equal(calls.generate, 0);
 });
