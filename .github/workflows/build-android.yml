@@ -169,7 +169,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          package_path="ma/sirsirtravel/morocco/limited"
+          package_path="ma/sirsirtravel/morocco"
           kotlin_dir="android/app/src/main/kotlin/${package_path}"
           mkdir -p "${kotlin_dir}" android/app/src/main/res/layout android/app/src/main/res/xml android/app/src/main/res/drawable
           cp tool/android_widget/TravelWidgetProvider.kt "${kotlin_dir}/TravelWidgetProvider.kt"
