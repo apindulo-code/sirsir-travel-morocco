@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   worker-tests:
-    name: Worker unit tests (Node.js 22)
+    name: Worker unit tests and Wrangler validation (Node.js 22)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -33,3 +33,6 @@ jobs:
       - name: Run isolated Worker tests
         working-directory: backend/worker
         run: npm test
+      - name: Validate Worker bundle and Wrangler configuration without deploying
+        working-directory: backend/worker
+        run: npx wrangler deploy --dry-run
