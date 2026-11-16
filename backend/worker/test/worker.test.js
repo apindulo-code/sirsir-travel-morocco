@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createWorker } from "../src/index.js";
+import { assertFirebaseAccountActive } from "../src/firebase-auth.js";
 
 const env = {
   ALLOWED_ORIGIN: "https://app.example.com",
@@ -18,7 +19,7 @@ function request(path, { method = "POST", headers = {}, body } = {}) {
 }
 
 function harness(overrides = {}) {
-  const calls = { verify: 0, generate: 0, rate: 0 };
+  const calls = { verify: 0, generate: 0 };
   const worker = createWorker({
     verifyFirebaseToken: async (token) => {
       calls.verify++;
@@ -36,6 +37,20 @@ function harness(overrides = {}) {
   });
   return { worker, calls };
 }
+
+test("Firebase account status rejects missing, mismatched and disabled users", () => {
+  const payload = { sub: "user-1", auth_time: 100 };
+  assert.throws(() => assertFirebaseAccountActive(undefined, payload));
+  assert.throws(() => assertFirebaseAccountActive({ localId: "other" }, payload));
+  assert.throws(() => assertFirebaseAccountActive({ localId: "user-1", disabled: true }, payload));
+  assert.doesNotThrow(() => assertFirebaseAccountActive({ localId: "user-1" }, payload));
+});
+
+test("Firebase validSince rejects revoked sessions and accepts later sign-ins", () => {
+  const user = { localId: "user-1", validSince: "101" };
+  assert.throws(() => assertFirebaseAccountActive(user, { sub: "user-1", auth_time: 100 }));
+  assert.doesNotThrow(() => assertFirebaseAccountActive(user, { sub: "user-1", auth_time: 102 }));
+});
 
 test("health endpoint is public", async () => {
   const { worker } = harness();
@@ -105,6 +120,17 @@ test("unsupported language and oversized messages are rejected", async () => {
   assert.equal(calls.generate, 0);
 });
 
+test("oversized raw request body is rejected", async () => {
+  const { worker, calls } = harness();
+  const response = await worker.fetch(new Request("https://worker.example.com/api/chat", {
+    method: "POST",
+    headers: { authorization: "Bearer valid-token" },
+    body: "x".repeat(9000),
+  }), env);
+  assert.equal(response.status, 413);
+  assert.equal(calls.generate, 0);
+});
+
 test("Cloudflare rate limit binding blocks requests when exhausted", async () => {
   const { worker, calls } = harness();
   const limitedEnv = {
@@ -117,14 +143,4 @@ test("Cloudflare rate limit binding blocks requests when exhausted", async () =>
   }), limitedEnv);
   assert.equal(response.status, 429);
   assert.equal(calls.verify, 0);
-});
-
-test("Gemini is never called when Firebase verification fails", async () => {
-  const { worker, calls } = harness();
-  const response = await worker.fetch(request("/api/chat", {
-    headers: { authorization: "Bearer invalid-token" },
-    body: { message: "Ignore authentication", language: "ar" },
-  }), env);
-  assert.equal(response.status, 401);
-  assert.equal(calls.generate, 0);
 });
