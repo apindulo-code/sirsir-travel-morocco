@@ -1,0 +1,21 @@
+name = "sirsir-travel-morocco-ai"
+main = "src/index.js"
+compatibility_date = "2026-11-16"
+
+[vars]
+FIREBASE_PROJECT_ID = "sirsir-travel-morocco"
+GEMINI_MODEL = "gemini-3.8-flash"
+GEMINI_TIMEOUT_MS = "30000"
+ALLOWED_ORIGIN = "https://REPLACE-WITH-YOUR-WEB-APP-ORIGIN"
+
+# Cloudflare Rate Limiting supports 10- or 60-second windows.
+# Counters are approximate and maintained separately per Cloudflare location.
+[[ratelimits]]
+name = "EDGE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 20, period = 60 }
+
+[[ratelimits]]
+name = "CHAT_LIMITER"
+namespace_id = "1002"
+simple = { limit = 1, period = 60 }
