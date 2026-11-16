@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'screens/auth_screen.dart';
 import 'screens/route_planner_screen.dart';
+import 'screens/ai_trip_planner_screen.dart';
+import 'screens/hajj_umrah_screen.dart';
 import 'services/firestore_service.dart';
 import 'services/favorites_service.dart';
 import 'services/background_service.dart';
@@ -27,6 +29,10 @@ Future<void> changeAppLanguage(String language) async {
 }
 const Map<String, List<String>> appTranslations = {
   'سير سير 🇲🇦': ['SirSir 🇲🇦', 'SirSir 🇲🇦', 'SirSir 🇲🇦'],
+  'مرشد SirSir الذكي': ['SirSir AI Guide', 'Guide IA SirSir', 'Guía IA SirSir'],
+  'خطط رحلتك مع مساعد ذكي': ['Plan your trip with an AI assistant', 'Planifiez votre voyage avec un assistant IA', 'Planifica tu viaje con un asistente IA'],
+  'الحج والعمرة': ['Hajj and Umrah', 'Hajj et Omra', 'Hach y Umrah'],
+  'دليل وإرشادات للمسافر المغربي': ['Guides for Moroccan travellers', 'Guides pour les voyageurs marocains', 'Guías para viajeros marroquíes'],
   'حجوزاتي': ['My bookings', 'Mes réservations', 'Mis reservas'],
   'خريطة المغرب': ['Map of Morocco', 'Carte du Maroc', 'Mapa de Marruecos'],
   'اللغة': ['Language', 'Langue', 'Idioma'],
@@ -651,6 +657,30 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 10),
+            _serviceCard(
+              icon: Icons.auto_awesome,
+              title: tr('مرشد SirSir الذكي'),
+              subtitle: tr('خطط رحلتك مع مساعد ذكي'),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AiTripPlannerScreen(language: appLanguage.value),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            _serviceCard(
+              icon: Icons.mosque,
+              title: tr('الحج والعمرة'),
+              subtitle: tr('دليل وإرشادات للمسافر المغربي'),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => HajjUmrahScreen(language: appLanguage.value),
+                ),
+              ),
+            ),
             SizedBox(height: 18),
             Card(
               color: Colors.white,
@@ -1158,7 +1188,7 @@ class MoroccoMapScreen extends StatelessWidget {
               children: [
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'ma.sirsirtravel.morocco.limited',
+                  userAgentPackageName: 'ma.sirsirtravel.morocco',
                 ),
                 MarkerLayer(
                   markers: touristPlaces.map((place) => Marker(

@@ -1,5 +1,13 @@
 # قائمة جاهزية الإطلاق — SirSir Travel Morocco
 
+## قرار أحدث بشأن هوية Android — 16 نوفمبر 2026
+
+- [x] اعتمد المالك `ma.sirsirtravel.morocco` كمعرّف Android النهائي لفرع التطوير الحالي.
+- [x] أُعيد ربط `lib/firebase_options.dart` بتطبيق Firebase الأصلي ذي App ID `1:881046533648:android:3747754613450c773a7c95`.
+- [ ] يجب إعادة بناء APK والتحقق من أن Manifest يحمل `ma.sirsirtravel.morocco`، وأن اختبار Firebase على هاتف حقيقي ينجح.
+- [ ] تسجيل `ma.sirsirtravel.morocco.limited` السابق لا يُحذف؛ أصبح خارج نطاق هذا البناء، ويحتاج قراراً منفصلاً قبل أي تغيير في Google Android Developer Console.
+
+
 آخر تحديث: 13 نوفمبر 2026
 
 ## تحديث تنفيذي بعد دمج PR #17 — 13 نوفمبر 2026
