@@ -8,10 +8,14 @@ GEMINI_MODEL = "gemini-3.8-flash"
 GEMINI_TIMEOUT_MS = "30000"
 ALLOWED_ORIGIN = "https://REPLACE-WITH-YOUR-WEB-APP-ORIGIN"
 
-# Create a Cloudflare Workers Rate Limiting binding in your account and
-# replace the namespace_id with its assigned ID. This is an edge abuse guard;
-# counters are location-scoped, not a global per-user quota.
+# Cloudflare Rate Limiting supports 10- or 60-second windows.
+# Counters are approximate and maintained separately per Cloudflare location.
+[[ratelimits]]
+name = "EDGE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 20, period = 60 }
+
 [[ratelimits]]
 name = "CHAT_LIMITER"
-namespace_id = "1001"
-simple = { limit = 7, period = 300 }
+namespace_id = "1002"
+simple = { limit = 1, period = 60 }
