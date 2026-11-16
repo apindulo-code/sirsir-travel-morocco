@@ -1,0 +1,22 @@
+name = "sirsir-travel-morocco-ai"
+main = "src/index.js"
+compatibility_date = "2026-11-16"
+
+[vars]
+FIREBASE_PROJECT_ID = "sirsir-travel-morocco"
+GEMINI_MODEL = "gemini-3.8-flash"
+GEMINI_TIMEOUT_MS = "30000"
+# Browser access stays closed until the real SirSir web origin is verified.
+# Native Android requests without an Origin header remain supported.
+ALLOWED_ORIGIN = ""
+
+# Positive integer IDs; each must be unique in this Cloudflare account.
+[[ratelimits]]
+name = "EDGE_LIMITER"
+namespace_id = "8810465336481"
+simple = { limit = 20, period = 60 }
+
+[[ratelimits]]
+name = "CHAT_LIMITER"
+namespace_id = "8810465336482"
+simple = { limit = 10, period = 60 }
