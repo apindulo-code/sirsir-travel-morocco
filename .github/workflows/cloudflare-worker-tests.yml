@@ -1,0 +1,35 @@
+name: Cloudflare Worker Backend Tests
+
+on:
+  push:
+    branches:
+      - feat/cloudflare-workers-backend
+    paths:
+      - "backend/worker/**"
+      - ".github/workflows/cloudflare-worker-tests.yml"
+  pull_request:
+    paths:
+      - "backend/worker/**"
+      - ".github/workflows/cloudflare-worker-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  worker-tests:
+    name: Worker unit tests (Node.js 22)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Worker dependencies
+        working-directory: backend/worker
+        run: npm install --no-audit --no-fund
+      - name: Run isolated Worker tests
+        working-directory: backend/worker
+        run: npm test
