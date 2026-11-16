@@ -1,3 +1,7 @@
+# تحديث قرار معرّف Android — 16 نوفمبر 2026
+
+اعتمد المشروع مجدداً `ma.sirsirtravel.morocco` كمعرّف Android النهائي لهذه النسخة. تمت استعادة Firebase App ID الأصلي المسجل سابقاً `1:881046533648:android:3747754613450c773a7c95` في `lib/firebase_options.dart`. تسجيل Firebase والحزمة المنفصلة `ma.sirsirtravel.morocco.limited` يظل محفوظاً كسجل مستقل ولا يُستخدم في هذا البناء. لا تحذف تسجيل الحزمة المحدودة من Google أو Firebase دون قرار منفصل.
+
 # إعداد Firebase لتطبيق SirSir Travel Morocco
 
 ## الإعدادات المسجلة
