@@ -68,7 +68,7 @@ jobs:
               const isExpectedSquashChild =
                 (main.parents || []).length === 1 &&
                 main.parents[0].sha === expectedMain &&
-                main.commit?.message?.split("\\n")[0] === expectedWorkflowCommitMessage &&
+                main.commit?.message?.split("\n")[0]?.startsWith(expectedWorkflowCommitMessage) &&
                 files.length === 1 &&
                 files[0].filename === workflowPath &&
                 files[0].status === "added";
