@@ -24,10 +24,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Install Firestore rules test dependencies
-        run: npm ci --no-audit --no-fund
+        run: npm install --no-audit --no-fund
 
       - name: Run Firestore Emulator security tests before deployment
         run: npx firebase emulators:exec --project demo-sirsir-travel-morocco --only firestore "npm test"
