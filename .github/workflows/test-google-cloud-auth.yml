@@ -1,6 +1,6 @@
 name: Test Google Cloud Workload Identity
 
-"on":
+on:
   workflow_dispatch:
   push:
     branches:
@@ -24,8 +24,7 @@ jobs:
         uses: google-github-actions/auth@v3
         with:
           project_id: sirsir-travel-morocco
-          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
-          # Use the same dedicated, least-privilege identity as the Firestore deploy workflow.
+          workload_identity_provider: projects/881046533648/locations/global/workloadIdentityPools/sirsir-github/providers/github
           service_account: sirsir-github-deploy@sirsir-travel-morocco.iam.gserviceaccount.com
           create_credentials_file: true
           export_environment_variables: true
