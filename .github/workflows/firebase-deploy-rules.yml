@@ -42,6 +42,7 @@ jobs:
   deploy-firestore-rules:
     name: Deploy rules after tests pass
     needs: test-firestore
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     # Only this isolated deployment job can request a Google OIDC token.
