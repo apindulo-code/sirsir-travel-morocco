@@ -53,7 +53,7 @@ jobs:
           node-version: 22
 
       - name: Install Firebase CLI
-        run: npm install --global firebase-tools@15.36.0
+        run: npm install --global --ignore-scripts firebase-tools@15.36.0
 
       - name: Verify pinned Firebase CLI version
         run: test "$(firebase --version)" = "15.36.0"
