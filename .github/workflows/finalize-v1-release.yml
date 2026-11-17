@@ -59,8 +59,10 @@ jobs:
 
           (async () => {
             const main = await api("/commits/main");
-            if (main.sha !== expectedMain) {
-              throw new Error(`Safety stop: main is ${main.sha}, expected ${expectedMain}. No changes made.`);
+            const mainIsApproved = main.sha === expectedMain ||
+              (main.parents || []).some(parent => parent.sha === expectedMain);
+            if (!mainIsApproved) {
+              throw new Error(`Safety stop: main ${main.sha} is not the approved commit or its direct merge child. No changes made.`);
             }
 
             const existingRef = await optional(`/git/ref/tags/${tag}`);
@@ -84,7 +86,7 @@ jobs:
             if (!release) {
               release = await api("/releases", "POST", {
                 tag_name: tag,
-                target_commitish: "main",
+                target_commitish: expectedMain,
                 name: "SirSir Travel Morocco v1.0.0",
                 body: "First verified release of SirSir Travel Morocco. Security improvements merged and Android build verified.",
                 draft: false,
