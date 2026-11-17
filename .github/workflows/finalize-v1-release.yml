@@ -26,6 +26,8 @@ jobs:
           const token = process.env.GH_TOKEN;
           const expectedMain = "21e4473ea59f1b0949fb76c71995392037f2a3ba";
           const expectedBranch = "0a6f0ea65bfb7144fd41888c2240b0c86137d516";
+          const expectedWorkflowCommitMessage = "Add guarded automation to finalize v1.0.0 release";
+          const workflowPath = ".github/workflows/finalize-v1-release.yml";
           const tag = "v1.0.0";
           const branch = "security/isolate-firestore-oidc-deploy";
           const base = `https://api.github.com/repos/${owner}/${repo}`;
@@ -59,21 +61,31 @@ jobs:
 
           (async () => {
             const main = await api("/commits/main");
-            const mainIsApproved = main.sha === expectedMain ||
-              (main.parents || []).some(parent => parent.sha === expectedMain);
+            let mainIsApproved = main.sha === expectedMain;
+
             if (!mainIsApproved) {
-              throw new Error(`Safety stop: main ${main.sha} is not the approved commit or its direct merge child. No changes made.`);
+              const files = main.files || [];
+              const isExpectedSquashChild =
+                (main.parents || []).length === 1 &&
+                main.parents[0].sha === expectedMain &&
+                main.commit?.message?.split("\\n")[0] === expectedWorkflowCommitMessage &&
+                files.length === 1 &&
+                files[0].filename === workflowPath &&
+                files[0].status === "added";
+              mainIsApproved = isExpectedSquashChild;
+            }
+
+            if (!mainIsApproved) {
+              throw new Error(`Safety stop: main ${main.sha} is neither the approved commit nor its exact expected workflow-only squash child. No changes made.`);
             }
 
             const existingRef = await optional(`/git/ref/tags/${tag}`);
             if (existingRef) {
-              let targetSha = existingRef.object.sha;
-              if (existingRef.object.type === "tag") {
-                const annotated = await api(`/git/tags/${targetSha}`);
-                targetSha = annotated.object.sha;
+              if (existingRef.object.type !== "commit") {
+                throw new Error(`Safety stop: existing ${tag} is not a lightweight commit tag. No release or branch changes made.`);
               }
-              if (targetSha !== expectedMain) {
-                throw new Error(`Safety stop: existing ${tag} points to ${targetSha}, not the approved commit.`);
+              if (existingRef.object.sha !== expectedMain) {
+                throw new Error(`Safety stop: existing ${tag} points to ${existingRef.object.sha}, not the approved commit.`);
               }
             } else {
               await api("/git/refs", "POST", {
@@ -83,7 +95,11 @@ jobs:
             }
 
             let release = await optional(`/releases/tags/${tag}`);
-            if (!release) {
+            if (release) {
+              if (release.tag_name !== tag || release.draft || release.prerelease) {
+                throw new Error("Safety stop: existing GitHub Release is not a published, non-prerelease v1.0.0 release. Branch was not deleted.");
+              }
+            } else {
               release = await api("/releases", "POST", {
                 tag_name: tag,
                 target_commitish: expectedMain,
@@ -94,8 +110,14 @@ jobs:
                 generate_release_notes: false
               });
             }
-            if (release.tag_name !== tag) {
-              throw new Error("Safety stop: GitHub returned a release with an unexpected tag.");
+
+            if (release.tag_name !== tag || release.draft || release.prerelease) {
+              throw new Error("Safety stop: GitHub Release validation failed. Branch was not deleted.");
+            }
+
+            const tagBeforeCleanup = await api(`/git/ref/tags/${tag}`);
+            if (tagBeforeCleanup.object.type !== "commit" || tagBeforeCleanup.object.sha !== expectedMain) {
+              throw new Error("Safety stop: v1.0.0 is not a lightweight tag directly targeting the approved commit. Branch was not deleted.");
             }
 
             const oldBranch = await optional(`/branches/${branch}`);
@@ -111,10 +133,13 @@ jobs:
               throw new Error("Final verification failed: tag does not point directly to the approved merge commit.");
             }
             const verifiedRelease = await api(`/releases/tags/${tag}`);
+            if (verifiedRelease.tag_name !== tag || verifiedRelease.draft || verifiedRelease.prerelease) {
+              throw new Error("Final verification failed: GitHub Release is not a published stable v1.0.0 release.");
+            }
             const branchCheck = await optional(`/branches/${branch}`);
             if (branchCheck) throw new Error("Final verification failed: old branch still exists.");
 
-            console.log("SUCCESS: v1.0.0 tag and GitHub Release verified; old branch deleted.");
+            console.log("SUCCESS: v1.0.0 lightweight tag and stable GitHub Release verified; old branch deleted.");
             console.log(`Commit: ${expectedMain}`);
             console.log(`Release: ${verifiedRelease.html_url}`);
           })().catch(error => { console.error(error); process.exit(1); });
