@@ -1,0 +1,119 @@
+name: Finalize v1.0.0 Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: finalize-sirsir-v1-release
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    name: Verify, tag, release, and clean up
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Verify main and finalize release safely
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPOSITORY: ${{ github.repository }}
+        run: |
+          node <<'NODE'
+          const [owner, repo] = process.env.GH_REPOSITORY.split("/");
+          const token = process.env.GH_TOKEN;
+          const expectedMain = "21e4473ea59f1b0949fb76c71995392037f2a3ba";
+          const expectedBranch = "0a6f0ea65bfb7144fd41888c2240b0c86137d516";
+          const tag = "v1.0.0";
+          const branch = "security/isolate-firestore-oidc-deploy";
+          const base = `https://api.github.com/repos/${owner}/${repo}`;
+
+          async function api(path, method = "GET", body) {
+            const response = await fetch(base + path, {
+              method,
+              headers: {
+                "Accept": "application/vnd.github+json",
+                "Authorization": `Bearer ${token}`,
+                "X-GitHub-Api-Version": "2022-11-28",
+                ...(body ? {"Content-Type": "application/json"} : {})
+              },
+              ...(body ? {body: JSON.stringify(body)} : {})
+            });
+            const text = await response.text();
+            let data = {};
+            try { data = text ? JSON.parse(text) : {}; } catch {}
+            if (!response.ok) {
+              const error = new Error(`${method} ${path}: HTTP ${response.status} ${data.message || text}`);
+              error.status = response.status;
+              throw error;
+            }
+            return data;
+          }
+
+          async function optional(path) {
+            try { return await api(path); }
+            catch (error) { if (error.status === 404) return null; throw error; }
+          }
+
+          (async () => {
+            const main = await api("/commits/main");
+            if (main.sha !== expectedMain) {
+              throw new Error(`Safety stop: main is ${main.sha}, expected ${expectedMain}. No changes made.`);
+            }
+
+            const existingRef = await optional(`/git/ref/tags/${tag}`);
+            if (existingRef) {
+              let targetSha = existingRef.object.sha;
+              if (existingRef.object.type === "tag") {
+                const annotated = await api(`/git/tags/${targetSha}`);
+                targetSha = annotated.object.sha;
+              }
+              if (targetSha !== expectedMain) {
+                throw new Error(`Safety stop: existing ${tag} points to ${targetSha}, not the approved commit.`);
+              }
+            } else {
+              await api("/git/refs", "POST", {
+                ref: `refs/tags/${tag}`,
+                sha: expectedMain
+              });
+            }
+
+            let release = await optional(`/releases/tags/${tag}`);
+            if (!release) {
+              release = await api("/releases", "POST", {
+                tag_name: tag,
+                target_commitish: "main",
+                name: "SirSir Travel Morocco v1.0.0",
+                body: "First verified release of SirSir Travel Morocco. Security improvements merged and Android build verified.",
+                draft: false,
+                prerelease: false,
+                generate_release_notes: false
+              });
+            }
+            if (release.tag_name !== tag) {
+              throw new Error("Safety stop: GitHub returned a release with an unexpected tag.");
+            }
+
+            const oldBranch = await optional(`/branches/${branch}`);
+            if (oldBranch) {
+              if (oldBranch.commit.sha !== expectedBranch) {
+                throw new Error(`Safety stop: old branch moved to ${oldBranch.commit.sha}; refusing to delete an unexpected branch head.`);
+              }
+              await api(`/git/refs/heads/${branch}`, "DELETE");
+            }
+
+            const verifiedTag = await api(`/git/ref/tags/${tag}`);
+            if (verifiedTag.object.type !== "commit" || verifiedTag.object.sha !== expectedMain) {
+              throw new Error("Final verification failed: tag does not point directly to the approved merge commit.");
+            }
+            const verifiedRelease = await api(`/releases/tags/${tag}`);
+            const branchCheck = await optional(`/branches/${branch}`);
+            if (branchCheck) throw new Error("Final verification failed: old branch still exists.");
+
+            console.log("SUCCESS: v1.0.0 tag and GitHub Release verified; old branch deleted.");
+            console.log(`Commit: ${expectedMain}`);
+            console.log(`Release: ${verifiedRelease.html_url}`);
+          })().catch(error => { console.error(error); process.exit(1); });
+          NODE
