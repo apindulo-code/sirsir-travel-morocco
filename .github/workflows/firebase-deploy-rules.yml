@@ -58,7 +58,10 @@ jobs:
           node-version: 22
 
       - name: Install Firebase CLI
-        run: npm install --global firebase-tools
+        run: npm install --global firebase-tools@15.36.0
+
+      - name: Verify pinned Firebase CLI version
+        run: test "$(firebase --version)" = "15.36.0"
 
       - name: Authenticate to Google Cloud without service-account keys
         uses: google-github-actions/auth@v3
