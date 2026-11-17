@@ -3,19 +3,21 @@ name: Deploy Firestore Security Rules
 on:
   workflow_dispatch:
 
+# OIDC is deliberately NOT granted at workflow scope.
 permissions:
   contents: read
-  id-token: write
 
 concurrency:
   group: firebase-firestore-rules-deploy
   cancel-in-progress: false
 
 jobs:
-  deploy-firestore-rules:
-    name: Test and deploy Firestore rules manually
-    runs-on: ubuntu-latest
+  test-firestore:
+    name: Test Firestore rules without cloud credentials
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -28,8 +30,33 @@ jobs:
       - name: Install Firestore rules test dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Run Firestore Emulator security tests before deployment
+      - name: Run Firestore Emulator security tests
         run: npx firebase emulators:exec --project demo-sirsir-travel-morocco --only firestore "npm test"
+
+  deploy-firestore-rules:
+    name: Deploy rules after tests pass
+    needs: test-firestore
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # Only this isolated deployment job can request a Google OIDC token.
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Firebase CLI
+        run: npm install --global --ignore-scripts firebase-tools@15.36.0
+
+      - name: Verify pinned Firebase CLI version
+        run: test "$(firebase --version)" = "15.36.0"
 
       - name: Authenticate to Google Cloud without service-account keys
         uses: google-github-actions/auth@v3
@@ -39,9 +66,6 @@ jobs:
           service_account: sirsir-github-deploy@sirsir-travel-morocco.iam.gserviceaccount.com
           create_credentials_file: true
           export_environment_variables: true
-
-      - name: Install Firebase CLI
-        run: npm install --global firebase-tools
 
       - name: Deploy Firestore security rules
         run: firebase deploy --only firestore:rules --project sirsir-travel-morocco --non-interactive
