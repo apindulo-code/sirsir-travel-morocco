@@ -1,12 +1,7 @@
 name: Deploy legal website to GitHub Pages
 
+# Legal pages remain unpublished until a deliberate manual release.
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "docs/**"
-      - ".github/workflows/deploy-legal-site.yml"
   workflow_dispatch:
 
 permissions:
