@@ -1,0 +1,23 @@
+---
+layout: default
+title: تنزيل التطبيق وتثبيته
+permalink: /download/
+---
+<section dir="rtl" lang="ar">
+  <h1>تنزيل SirSir Travel Morocco</h1>
+  <p>الإصدار الحالي: <strong>v1.0.0</strong></p>
+  <p><a href="https://github.com/apindulo-code/sirsir-travel-morocco/releases/tag/v1.0.0"><strong>فتح صفحة الإصدار الرسمي وتنزيل APK وملف SHA-256</strong></a></p>
+  <h2>طريقة التثبيت</h2>
+  <ol><li>نزّل APK من قسم Assets في صفحة GitHub الرسمية.</li><li>افتح الملف. إذا منع Android التثبيت، افتح الإعدادات واسمح بالتثبيت من هذا المصدر للتطبيق الذي استخدمته للتنزيل.</li><li>ارجع إلى ملف APK واضغط تثبيت. بعد الانتهاء يمكنك إيقاف إذن التثبيت من هذا المصدر.</li></ol>
+  <h2>التحقق من سلامة الملف</h2>
+  <p>نزّل <code>SHA256SUMS.txt</code> من صفحة الإصدار وقارن قيمته بنتيجة الأمر على Termux أو Linux أو macOS:</p>
+  <pre><code>sha256sum SirSir-Travel-Morocco-v1.0.0.apk</code></pre>
+  <p>في Windows PowerShell:</p>
+  <pre><code>Get-FileHash .\\SirSir-Travel-Morocco-v1.0.0.apk -Algorithm SHA256</code></pre>
+  <p>إذا لم تتطابق القيمتان، لا تثبّت الملف وأعد تنزيله من المصدر الرسمي.</p>
+  <h2>بصمات شهادة توقيع Android</h2>
+  <ul><li>SHA-1: <code>E1:3C:27:E4:67:AB:01:81:EE:75:C6:94:4F:83:6C:80:BE:FB:ED:72</code></li><li>SHA-256: <code>1A:B0:EF:69:E5:EB:AA:5B:7A:3A:D6:84:53:4A:B5:07:3D:08:1F:FA:82:1A:6B:36:07:BA:F5:BA:0B:94:8F:FA</code></li></ul>
+  <p>بصمة شهادة التوقيع تختلف عن بصمة SHA-256 لملف APK. لا تشارك مفاتيح التوقيع الخاصة أو كلمات مرورها.</p>
+  <p>قد تختلف أسماء إعدادات Android حسب الجهاز. فعّل التثبيت من مصدر موثوق فقط، وأوقف الإذن بعد التثبيت إن رغبت.</p>
+  <p>الدعم: <a href="mailto:apindulo@gmail.com">apindulo@gmail.com</a></p>
+</section>
