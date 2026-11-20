@@ -1,4 +1,4 @@
-import { verifyFirebaseToken } from "./firebase-auth.js";
+import { FirebaseAuthError, FirebaseServiceError, verifyFirebaseToken } from "./firebase-auth.js";
 import { generateGeminiReply } from "./gemini.js";
 
 const ALLOWED_LANGUAGES = new Set(["ar", "fr", "en", "es"]);
@@ -91,8 +91,15 @@ export function createWorker(deps = {}) {
       let identity;
       try {
         identity = await verifyToken(match[1], env);
-      } catch {
-        return json({ error: "unauthorized" }, 401, headers);
+      } catch (error) {
+        if (error instanceof FirebaseAuthError) {
+          return json({ error: "unauthorized" }, 401, headers);
+        }
+        if (error instanceof FirebaseServiceError) {
+          return json({ error: "authentication_service_unavailable" }, 503, headers);
+        }
+        console.error("Firebase authentication dependency failed");
+        return json({ error: "authentication_service_unavailable" }, 503, headers);
       }
 
       // Per-user guard avoids penalizing multiple legitimate users behind one NAT.
