@@ -43,7 +43,7 @@ class BackgroundService {
       taskName,
       frequency: const Duration(hours: 3),
       constraints: Constraints(networkType: NetworkType.connected),
-      existingWorkPolicy: ExistingWorkPolicy.keep,
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
     );
   }
 

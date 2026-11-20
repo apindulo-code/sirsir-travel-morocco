@@ -23,48 +23,26 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.50.0'
           channel: stable
           cache: true
 
       - name: Generate Flutter platform files
         run: flutter create --platforms=android,web --project-name=sirsir_travel_morocco .
 
+      - name: Set up Java 17 for Android builds
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
 
 
 
-      - name: Align Android Kotlin bytecode targets for native plugins
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-
-          gradle = Path("android/build.gradle.kts")
-          if not gradle.exists():
-              raise SystemExit("Expected generated root Android Kotlin DSL build file")
-          source = gradle.read_text()
-          alignment = """
-          
-          // Apply Kotlin JVM 17 after plugins have configured their own compile tasks.
-          gradle.projectsEvaluated {
-              rootProject.allprojects {
-                  tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-                      compilerOptions {
-                          jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-                      }
-                  }
-              }
-          }
-          """
-          if "kotlinOptions.jvmTarget = \"11\"" not in source:
-              gradle.write_text(source.rstrip() + alignment)
-          print("Enforced Kotlin JVM 17 for Android plugin compile tasks after plugin configuration.")
-          PY
 
       - name: Configure Android package ID, launcher and permissions
         run: |
@@ -356,24 +334,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Align Android plugin Java bytecode targets
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          cache = Path.home() / ".pub-cache" / "hosted" / "pub.dev"
-          changed = []
-          for gradle in cache.glob("*/android/build.gradle*"):
-              source = gradle.read_text()
-              updated = source.replace("JavaVersion.VERSION_1_8", "JavaVersion.VERSION_17")
-              if updated != source:
-                  gradle.write_text(updated)
-                  changed.append(str(gradle))
-          print(f"Updated Java 8 Android plugin compile targets to Java 17 in {len(changed)} plugin Gradle files.")
-          for path in changed:
-              print(path)
-          PY
+      - name: Analyze Android toolchain compatibility
+        run: flutter analyze --suggestions
+
       - name: Analyze Flutter source
         run: flutter analyze --fatal-warnings --no-fatal-infos
 
@@ -403,8 +366,9 @@ jobs:
           echo "APK v2 signature and expected release-certificate fingerprints verified."
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
+          compression-level: 0
           name: sirsir-travel-morocco-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
@@ -416,7 +380,7 @@ jobs:
 
       - name: Upload signed Android App Bundle
         if: env.ANDROID_SIGNING_CONFIGURED == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: sirsir-travel-morocco-google-play-aab
           path: build/app/outputs/bundle/release/app-release.aab
@@ -427,7 +391,7 @@ jobs:
         run: flutter build web --release
 
       - name: Upload web app
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: sirsir-travel-morocco-web
           path: build/web/
@@ -494,7 +458,7 @@ jobs:
 
       - name: Upload emulator diagnostics
         if: ${{ always() && steps.emulator_smoke.outcome == 'failure' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: sirsir-emulator-diagnostics-${{ github.run_number }}
           path: build/emulator-diagnostics/
