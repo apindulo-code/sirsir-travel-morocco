@@ -69,36 +69,13 @@ jobs:
           fi
           echo "Manual Firestore deployment uses the verified dedicated identity."
 
-      - name: Inspect Firebase backend resources (read-only)
-        continue-on-error: true
+      - name: Verify default Firestore database read access (required)
         shell: bash
         run: |
-          echo "Checking whether the Firestore API is enabled..."
-          if gcloud services list --enabled --project sirsir-travel-morocco --filter="config.name=firestore.googleapis.com" --format="value(config.name)" | grep -q "firestore.googleapis.com"; then
-            echo "Firestore API is enabled."
-          else
-            echo "Firestore API is disabled or the service account cannot inspect service activation."
+          set -euo pipefail
+          echo "Checking read access to the default Firestore database..."
+          if ! gcloud firestore databases describe --database="(default)" --project=sirsir-travel-morocco --format="yaml(name,type,locationId)"; then
+            echo "::error::The authenticated Workload Identity principal cannot read the default Firestore database. Check that sirsir-github-deploy has the least-privilege Firestore/Datastore database metadata read permission (for example roles/datastore.viewer), and verify the database exists. This check is required and intentionally does not use continue-on-error."
+            exit 1
           fi
-
-          echo "Checking the default Firestore database..."
-          if gcloud firestore databases describe --database="(default)" --project sirsir-travel-morocco --format="yaml(name,type,locationId)"; then
-            echo "Default Firestore database is accessible."
-          else
-            echo "Default Firestore database is not available yet, or the service account lacks read permission."
-          fi
-
-      - name: Verify Firebase APIs and Firestore database (read-only)
-        continue-on-error: true
-        shell: bash
-        run: |
-          set +e
-          for api in firestore.googleapis.com identitytoolkit.googleapis.com; do
-            if gcloud services list --enabled --project=sirsir-travel-morocco --filter="config.name=$api" --format="value(config.name)" | grep -q "$api"; then
-              echo "$api: ENABLED"
-            else
-              echo "$api: NOT ENABLED or not visible to this service account"
-            fi
-          done
-
-          echo "Checking default Firestore database..."
-          gcloud firestore databases describe --database="(default)" --project=sirsir-travel-morocco --format="yaml(name,type,locationId)"
+          echo "Default Firestore database metadata is readable by the dedicated deployment identity."
