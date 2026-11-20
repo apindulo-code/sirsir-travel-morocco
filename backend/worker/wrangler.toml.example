@@ -6,7 +6,7 @@ compatibility_date = "2026-11-16"
 FIREBASE_PROJECT_ID = "sirsir-travel-morocco"
 GEMINI_MODEL = "gemini-3.8-flash"
 GEMINI_TIMEOUT_MS = "30000"
-ALLOWED_ORIGIN = "https://REPLACE-WITH-YOUR-WEB-APP-ORIGIN"
+ALLOWED_ORIGIN = ""
 
 # Cloudflare Rate Limiting supports 10- or 60-second windows.
 # Counters are approximate and maintained separately per Cloudflare location.
