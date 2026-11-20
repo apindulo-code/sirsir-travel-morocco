@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createWorker } from "../src/index.js";
-import { assertFirebaseAccountActive, FirebaseAuthError, FirebaseServiceError } from "../src/firebase-auth.js";
+import { assertFirebaseAccountActive, FirebaseAuthError, FirebaseServiceError, lookupFirebaseAccount } from "../src/firebase-auth.js";
 
 const env = {
   ALLOWED_ORIGIN: "https://app.example.com",
@@ -52,6 +52,29 @@ test("Firebase validSince rejects revoked sessions and accepts later sign-ins", 
   assert.doesNotThrow(() => assertFirebaseAccountActive(user, { sub: "user-1", auth_time: 102 }));
 });
 
+
+test("Firebase accounts lookup timeout aborts the underlying request", async () => {
+  let observedSignal;
+  await assert.rejects(
+    lookupFirebaseAccount("token", {
+      FIREBASE_WEB_API_KEY: "test-key",
+      FIREBASE_LOOKUP_TIMEOUT_MS: "1000",
+    }, (_url, options) => {
+      observedSignal = options.signal;
+      return new Promise((resolve, reject) => {
+        options.signal.addEventListener("abort", () => {
+          const error = new Error("aborted");
+          error.name = "AbortError";
+          reject(error);
+        }, { once: true });
+      });
+    }, { sub: "user-1", auth_time: 100 }),
+    (error) => error instanceof FirebaseServiceError &&
+      /timed out/.test(error.message),
+  );
+  assert.ok(observedSignal);
+  assert.equal(observedSignal.aborted, true);
+});
 
 test("Firebase credential rejection returns 401 while Firebase dependency failures return 503", async () => {
   const invalidWorker = createWorker({
