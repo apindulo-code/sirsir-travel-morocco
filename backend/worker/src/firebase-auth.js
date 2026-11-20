@@ -52,54 +52,58 @@ export async function verifyFirebaseToken(token, env, fetchImpl = fetch) {
     throw new FirebaseAuthError("Invalid Firebase token claims");
   }
 
-  const lookupUrl = new URL(
-    "https://identitytoolkit.googleapis.com/v1/accounts:lookup",
-  );
-  lookupUrl.searchParams.set("key", env.FIREBASE_WEB_API_KEY);
+  return lookupFirebaseAccount(token, env, fetchImpl, payload);
+}
 
-  const configuredTimeout = Number(env.FIREBASE_LOOKUP_TIMEOUT_MS);
-  const timeoutMs = Math.min(
-    Math.max(Number.isFinite(configuredTimeout) && configuredTimeout > 0
-      ? configuredTimeout : 8000, 1000),
-    15000,
-  );
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    let response;
+export async function lookupFirebaseAccount(token, env, fetchImpl, payload) {
+    const lookupUrl = new URL(
+      "https://identitytoolkit.googleapis.com/v1/accounts:lookup",
+    );
+    lookupUrl.searchParams.set("key", env.FIREBASE_WEB_API_KEY);
+  
+    const configuredTimeout = Number(env.FIREBASE_LOOKUP_TIMEOUT_MS);
+    const timeoutMs = Math.min(
+      Math.max(Number.isFinite(configuredTimeout) && configuredTimeout > 0
+        ? configuredTimeout : 8000, 1000),
+      15000,
+    );
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+  
     try {
-      response = await fetchImpl(lookupUrl, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ idToken: token }),
-        signal: controller.signal,
-      });
-    } catch (error) {
-      if (controller.signal.aborted) {
-        throw new FirebaseServiceError("Firebase account lookup timed out", { cause: error });
+      let response;
+      try {
+        response = await fetchImpl(lookupUrl, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ idToken: token }),
+          signal: controller.signal,
+        });
+      } catch (error) {
+        if (controller.signal.aborted) {
+          throw new FirebaseServiceError("Firebase account lookup timed out", { cause: error });
+        }
+        throw new FirebaseServiceError("Firebase account lookup is unavailable", { cause: error });
       }
-      throw new FirebaseServiceError("Firebase account lookup is unavailable", { cause: error });
-    }
-
-    if (!response.ok) {
-      if ([400, 401, 403].includes(response.status)) {
-        throw new FirebaseAuthError("Firebase account lookup rejected the token");
+  
+      if (!response.ok) {
+        if ([400, 401, 403].includes(response.status)) {
+          throw new FirebaseAuthError("Firebase account lookup rejected the token");
+        }
+        throw new FirebaseServiceError(
+          `Firebase account lookup returned HTTP ${response.status}`,
+        );
       }
-      throw new FirebaseServiceError(
-        `Firebase account lookup returned HTTP ${response.status}`,
-      );
+  
+      let data;
+      try {
+        data = await response.json();
+      } catch (error) {
+        throw new FirebaseServiceError("Firebase account lookup returned invalid JSON", { cause: error });
+      }
+      assertFirebaseAccountActive(data?.users?.[0], payload);
+      return { uid: payload.sub };
+    } finally {
+      clearTimeout(timer);
     }
-
-    let data;
-    try {
-      data = await response.json();
-    } catch (error) {
-      throw new FirebaseServiceError("Firebase account lookup returned invalid JSON", { cause: error });
-    }
-    assertFirebaseAccountActive(data?.users?.[0], payload);
-    return { uid: payload.sub };
-  } finally {
-    clearTimeout(timer);
-  }
 }
