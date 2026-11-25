@@ -43,7 +43,10 @@ class BackgroundService {
       taskName,
       frequency: const Duration(hours: 3),
       constraints: Constraints(networkType: NetworkType.connected),
-      existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+      // UPDATE replaces the stored periodic request specification, including
+      // its task-name input data, while preserving the original schedule.
+      // This migrates installs that registered the task with older plugin keys.
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.update,
     );
   }
 
