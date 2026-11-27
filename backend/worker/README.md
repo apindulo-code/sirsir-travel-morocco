@@ -15,7 +15,7 @@ This is a separate Workers-compatible implementation of the existing Express API
 
 ## Configuration
 
-The repository includes `wrangler.toml.example`, not a live account-specific `wrangler.toml`. Copy the example to `wrangler.toml` and review it before deployment. The two positive-integer rate-limit namespace IDs must be unique within your Cloudflare account; change them if either is already used by another Worker. Cloudflare requires these IDs to be unique per account.
+The repository tracks `wrangler.toml` and also provides `wrangler.toml.example` as a reference. Review the existing `wrangler.toml` in place before deployment; do not copy the example over it, because that could overwrite account-specific settings. Verify that both positive-integer rate-limit namespace IDs are unique within your Cloudflare account before deployment.
 
 Browser access remains closed until `ALLOWED_ORIGIN` is set to the verified origin of the actual SirSir web app. Do not guess this value. The checked-in Wrangler example intentionally sets it to an empty string, so browser requests are denied by default while native Android requests without an Origin header remain supported.
 
