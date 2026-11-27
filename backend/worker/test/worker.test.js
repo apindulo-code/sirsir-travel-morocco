@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createWorker } from "../src/index.js";
-import { assertFirebaseAccountActive, FirebaseAuthError, FirebaseServiceError, lookupFirebaseAccount } from "../src/firebase-auth.js";
+import { assertFirebaseAccountActive, FirebaseAuthError, FirebaseServiceError, lookupFirebaseAccount, verifyFirebaseToken } from "../src/firebase-auth.js";
 
 const env = {
   ALLOWED_ORIGIN: "https://app.example.com",
@@ -211,4 +211,51 @@ test("per-user rate limiter uses the verified Firebase uid", async () => {
   assert.equal(rateLimitKey, "firebase-user-1");
   assert.equal(calls.verify, 1);
   assert.equal(calls.generate, 0);
+});
+
+
+test("JWKS retrieval failures are service errors while JWT validation failures are auth errors", async () => {
+  const config = {
+    FIREBASE_PROJECT_ID: "sirsir-travel-morocco",
+    FIREBASE_WEB_API_KEY: "test-key",
+  };
+  await assert.rejects(
+    verifyFirebaseToken("token", config, fetch, async () => {
+      throw new TypeError("network unavailable");
+    }),
+    (error) => error instanceof FirebaseServiceError &&
+      /signing-key service/.test(error.message),
+  );
+  await assert.rejects(
+    verifyFirebaseToken("token", config, fetch, async () => {
+      const error = new Error("bad signature");
+      error.code = "ERR_JWS_SIGNATURE_VERIFICATION_FAILED";
+      throw error;
+    }),
+    (error) => error instanceof FirebaseAuthError,
+  );
+});
+
+test("Firebase API key restrictions return a service error, not an authentication error", async () => {
+  await assert.rejects(
+    lookupFirebaseAccount("token", {
+      FIREBASE_WEB_API_KEY: "restricted-key",
+      FIREBASE_LOOKUP_TIMEOUT_MS: "1000",
+    }, async () => new Response(JSON.stringify({
+      error: { message: "API_KEY_SERVICE_BLOCKED" },
+    }), { status: 403 }), { sub: "user-1", auth_time: 100 }),
+    (error) => error instanceof FirebaseServiceError,
+  );
+});
+
+test("recognized Firebase token rejection remains an authentication error", async () => {
+  await assert.rejects(
+    lookupFirebaseAccount("token", {
+      FIREBASE_WEB_API_KEY: "test-key",
+      FIREBASE_LOOKUP_TIMEOUT_MS: "1000",
+    }, async () => new Response(JSON.stringify({
+      error: { message: "INVALID_ID_TOKEN" },
+    }), { status: 400 }), { sub: "user-1", auth_time: 100 }),
+    (error) => error instanceof FirebaseAuthError,
+  );
 });
