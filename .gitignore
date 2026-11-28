@@ -55,3 +55,6 @@ backend/.env.*
 backend/node_modules/
 backend/coverage/
 backend/*.log
+
+# Local Cloudflare Worker secrets
+/backend/worker/.dev.vars

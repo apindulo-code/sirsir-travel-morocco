@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createWorker } from "../src/index.js";
-import { assertFirebaseAccountActive } from "../src/firebase-auth.js";
+import { assertFirebaseAccountActive, FirebaseAuthError, FirebaseServiceError, lookupFirebaseAccount, verifyFirebaseToken } from "../src/firebase-auth.js";
 
 const env = {
   ALLOWED_ORIGIN: "https://app.example.com",
@@ -23,7 +23,7 @@ function harness(overrides = {}) {
   const worker = createWorker({
     verifyFirebaseToken: async (token) => {
       calls.verify++;
-      if (token !== "valid-token") throw new Error("invalid token");
+      if (token !== "valid-token") throw new FirebaseAuthError("invalid token");
       return { uid: "firebase-user-1" };
     },
     generateGeminiReply: async ({ message, language, uid }) => {
@@ -50,6 +50,52 @@ test("Firebase validSince rejects revoked sessions and accepts later sign-ins", 
   const user = { localId: "user-1", validSince: "101" };
   assert.throws(() => assertFirebaseAccountActive(user, { sub: "user-1", auth_time: 100 }));
   assert.doesNotThrow(() => assertFirebaseAccountActive(user, { sub: "user-1", auth_time: 102 }));
+});
+
+
+test("Firebase accounts lookup timeout aborts the underlying request", async () => {
+  let observedSignal;
+  await assert.rejects(
+    lookupFirebaseAccount("token", {
+      FIREBASE_WEB_API_KEY: "test-key",
+      FIREBASE_LOOKUP_TIMEOUT_MS: "1000",
+    }, (_url, options) => {
+      observedSignal = options.signal;
+      return new Promise((resolve, reject) => {
+        options.signal.addEventListener("abort", () => {
+          const error = new Error("aborted");
+          error.name = "AbortError";
+          reject(error);
+        }, { once: true });
+      });
+    }, { sub: "user-1", auth_time: 100 }),
+    (error) => error instanceof FirebaseServiceError &&
+      /timed out/.test(error.message),
+  );
+  assert.ok(observedSignal);
+  assert.equal(observedSignal.aborted, true);
+});
+
+test("Firebase credential rejection returns 401 while Firebase dependency failures return 503", async () => {
+  const invalidWorker = createWorker({
+    verifyFirebaseToken: async () => { throw new FirebaseAuthError("invalid token"); },
+  });
+  const invalid = await invalidWorker.fetch(request("/api/chat", {
+    headers: { authorization: "Bearer invalid-token" },
+    body: { message: "Hello", language: "en" },
+  }), env);
+  assert.equal(invalid.status, 401);
+  assert.deepEqual(await invalid.json(), { error: "unauthorized" });
+
+  const unavailableWorker = createWorker({
+    verifyFirebaseToken: async () => { throw new FirebaseServiceError("Firebase unavailable"); },
+  });
+  const unavailable = await unavailableWorker.fetch(request("/api/chat", {
+    headers: { authorization: "Bearer valid-token" },
+    body: { message: "Hello", language: "en" },
+  }), env);
+  assert.equal(unavailable.status, 503);
+  assert.deepEqual(await unavailable.json(), { error: "authentication_service_unavailable" });
 });
 
 test("health endpoint is public", async () => {
@@ -165,4 +211,51 @@ test("per-user rate limiter uses the verified Firebase uid", async () => {
   assert.equal(rateLimitKey, "firebase-user-1");
   assert.equal(calls.verify, 1);
   assert.equal(calls.generate, 0);
+});
+
+
+test("JWKS retrieval failures are service errors while JWT validation failures are auth errors", async () => {
+  const config = {
+    FIREBASE_PROJECT_ID: "sirsir-travel-morocco",
+    FIREBASE_WEB_API_KEY: "test-key",
+  };
+  await assert.rejects(
+    verifyFirebaseToken("token", config, fetch, async () => {
+      throw new TypeError("network unavailable");
+    }),
+    (error) => error instanceof FirebaseServiceError &&
+      /signing-key service/.test(error.message),
+  );
+  await assert.rejects(
+    verifyFirebaseToken("token", config, fetch, async () => {
+      const error = new Error("bad signature");
+      error.code = "ERR_JWS_SIGNATURE_VERIFICATION_FAILED";
+      throw error;
+    }),
+    (error) => error instanceof FirebaseAuthError,
+  );
+});
+
+test("Firebase API key restrictions return a service error, not an authentication error", async () => {
+  await assert.rejects(
+    lookupFirebaseAccount("token", {
+      FIREBASE_WEB_API_KEY: "restricted-key",
+      FIREBASE_LOOKUP_TIMEOUT_MS: "1000",
+    }, async () => new Response(JSON.stringify({
+      error: { message: "API_KEY_SERVICE_BLOCKED" },
+    }), { status: 403 }), { sub: "user-1", auth_time: 100 }),
+    (error) => error instanceof FirebaseServiceError,
+  );
+});
+
+test("recognized Firebase token rejection remains an authentication error", async () => {
+  await assert.rejects(
+    lookupFirebaseAccount("token", {
+      FIREBASE_WEB_API_KEY: "test-key",
+      FIREBASE_LOOKUP_TIMEOUT_MS: "1000",
+    }, async () => new Response(JSON.stringify({
+      error: { message: "INVALID_ID_TOKEN" },
+    }), { status: 400 }), { sub: "user-1", auth_time: 100 }),
+    (error) => error instanceof FirebaseAuthError,
+  );
 });
